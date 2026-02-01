@@ -2,22 +2,27 @@ from collections import defaultdict
 
 '''
 ### Basic Flow ###
-1. Calc activity per category (Scan transactions)
-2. Calc total income
-3. Calc total available (Per categorty)
-4. Calc to be budgeted (Money available to budget)
-5. Calc overspending per category
-
+1. Scan transactions → calculate:
+   - activity per category
+   - total income
+2. Calculate available per category
+3. Calculate To Be Budgeted (TBB)
+4. Detect overspending
 '''
 
-def run_budget_engine():
-    pass
 
-
-
-transaction_id = defaultdict(int)
-ids = [0,0,0,2,24,5]
-for id in ids:
-    if id == 0:
-        transaction_id[id] += 1
-print(transaction_id)
+def run_budget_engine(previous_available, budgeted, transactions):
+    activity = defaultdict(float)
+    income_total = 0.0
+    
+    for transaction in transactions:
+        amount = transaction["amount"]
+        category_id = transaction.get("category_id")
+        if category_id is None:
+            income_total += amount
+        else:
+            activity[category_id] += amount
+    
+    print("Activity:", dict(activity))
+    print("Income:", income_total)
+pass
