@@ -1,28 +1,32 @@
-from collections import defaultdict
+from budget_engine import run_budget_engine
 
-'''
-### Basic Flow ###
-1. Scan transactions → calculate:
-   - activity per category
-   - total income
-2. Calculate available per category
-3. Calculate To Be Budgeted (TBB)
-4. Detect overspending
-'''
+# Test categories
+rent = "rent"
+internet = "internet"
+electric = "electric"
 
 
-def run_budget_engine(previous_available, budgeted, transactions):
-    activity = defaultdict(float)
-    income_total = 0.0
-    
-    for transaction in transactions:
-        amount = transaction["amount"]
-        category_id = transaction.get("category_id")
-        if category_id is None:
-            income_total += amount
-        else:
-            activity[category_id] += amount
-    
-    print("Activity:", dict(activity))
-    print("Income:", income_total)
-pass
+# Test previously available amounts
+previous_month_available = {
+    rent: 300.00,
+    internet: 0.50,
+    electric: 20.00
+}
+
+# Test budgeted amounts
+budgeted = {
+    rent: 500,
+    internet: 150.00,
+    electric: 200.00
+}
+
+# Test transaction
+transactions = [
+    {"category_id": rent, "amount": -59.00},
+    {"category_id": internet, "amount": -50.00},
+    {"category_id": electric, "amount": -25.00},
+    {"category_id": None, "amount": 5000.00}
+]
+
+result = run_budget_engine(previous_month_available, budgeted, transactions)
+print(result)
