@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+
 '''
 ### Basic Flow ###
 1. Scan transactions → calculate:
@@ -14,6 +15,7 @@ from collections import defaultdict
 def run_budget_engine(previous_month_available, budgeted, transactions):
     activity = defaultdict(float)
     income_total = 0.0
+    available = defaultdict(float)
     
     for transaction in transactions:
         amount = transaction["amount"]
@@ -23,6 +25,11 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         else:
             activity[category_id] += amount
     
-    print("Activity:", dict(activity))
-    print("Income:", income_total)
-pass
+    for category_id in budgeted:
+        available[category_id] = previous_month_available[category_id ] + budgeted[category_id] - activity[category_id]
+        
+        
+        
+        print("Activity:", dict(activity))
+        print("Income:", income_total)
+        print("Available: ", dict(available))
