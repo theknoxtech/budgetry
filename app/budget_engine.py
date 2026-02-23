@@ -25,11 +25,30 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         else:
             activity[category_id] += amount
     
+    # Calculate Available Amounts 
     for category_id in budgeted:
         available[category_id] = previous_month_available[category_id ] + budgeted[category_id] - activity[category_id]
-        
-        
-        
-        print("Activity:", dict(activity))
-        print("Income:", income_total)
-        print("Available: ", dict(available))
+    
+    # Calculate Amount to be Budgeted
+    to_be_budgeted = income_total - sum(budgeted.values())
+    
+    # Calculate Overspent Categories
+    overspent_categories = {}
+    for category_id in dict(activity):
+        if available[category_id] < 0:
+            overspent_categories[category_id] = available[category_id]
+    '''
+    print("Income:", income_total)
+    print("Available: ", dict(available))    
+    print("Activity:", dict(activity))
+    print("To Be Budgeted: ", to_be_budgeted)
+    print("Overspent: ", overspent_categories)
+    '''
+    
+    return {
+        "income_total ":income_total,
+        "available ": dict(available),
+        "activity: ": dict(activity),
+        "to_be_budgeted ": to_be_budgeted,
+        "overspent_categories ": overspent_categories
+        }
