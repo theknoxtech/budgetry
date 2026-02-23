@@ -1,4 +1,5 @@
 from collections import defaultdict
+from models import transaction, category, budget
 
 
 '''
@@ -13,30 +14,33 @@ from collections import defaultdict
 
 
 def run_budget_engine(previous_month_available, budgeted, transactions):
-    activity = defaultdict(float)
+    activity = {}
     income_total = 0.0
-    available = defaultdict(float)
-    
+
     for transaction in transactions:
-        amount = transaction["amount"]
-        category_id = transaction.get("category_id")
-        if category_id is None:
+        amount = transaction.amount
+        category_id = transaction.category_id
+        if category_id == "income":
             income_total += amount
         else:
+            activity.setdefault(category_id, 0.0)
             activity[category_id] += amount
     
-    # Calculate Available Amounts 
-    for category_id in budgeted:
-        available[category_id] = previous_month_available[category_id ] + budgeted[category_id] - activity[category_id]
+    # Calculate Available Amounts
+    available = {}
+    for category_id, budget in budgeted.items():
+        previous_month = previous_month_available.get(category_id, 0.0)
+        spent_money = activity.get(category_id, 0.0)
+        available[category_id] = previous_month + budget - spent_money
     
     # Calculate Amount to be Budgeted
     to_be_budgeted = income_total - sum(budgeted.values())
     
     # Calculate Overspent Categories
     overspent_categories = {}
-    for category_id in dict(activity):
-        if available[category_id] < 0:
-            overspent_categories[category_id] = available[category_id]
+    for category_id, avail_amount in available.items():
+        if avail_amount < 0:
+            overspent_categories[category_id] = avail_amount
     '''
     print("Income:", income_total)
     print("Available: ", dict(available))    
@@ -47,8 +51,8 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
     
     return {
         "income_total ":income_total,
-        "available ": dict(available),
-        "activity: ": dict(activity),
+        "available ": available,
+        "activity: ": activity,
         "to_be_budgeted ": to_be_budgeted,
         "overspent_categories ": overspent_categories
         }

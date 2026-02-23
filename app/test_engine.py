@@ -1,9 +1,12 @@
 from budget_engine import run_budget_engine
+from models import transaction, category, budget
+
 
 # Test categories
 rent = "rent"
 internet = "internet"
 electric = "electric"
+income = "income"
 
 
 # Test previously available amounts
@@ -22,10 +25,10 @@ budgeted = {
 
 # Test transaction
 transactions = [
-    {"category_id": rent, "amount": 100.00},
-    {"category_id": internet, "amount": -10.00},
-    {"category_id": electric, "amount": 5000.00},
-    {"category_id": None, "amount": 5000.00}
+    transaction(id="t1", date="2026-01-01", payee="A", amount=100.00, memo="", category_id=rent),
+    transaction(id="t2", date="2026-01-02", payee="B", amount=-10.00, memo="", category_id=internet),
+    transaction(id="t3", date="2026-01-03", payee="C", amount=5000.00, memo="", category_id=electric),
+    transaction(id="t4", date="2026-01-04", payee="D", amount=5000.00, memo="", category_id=income)
 ]
 
 result = run_budget_engine(previous_month_available, budgeted, transactions)
