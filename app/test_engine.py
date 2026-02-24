@@ -1,6 +1,6 @@
 from budget_engine import run_budget_engine
 from models import transaction, category, budget
-from database import init_db, save_transaction, save_category
+from database import init_db, save_transaction, save_category, get_categories, get_transaction
 
 
 # Test categories
@@ -33,6 +33,10 @@ transactions = [
 ]
 
 init_db()
-save_transaction(transactions[0])
-result = run_budget_engine(previous_month_available, budgeted, transactions)
-print(result)
+
+for t in transactions:
+    save_transaction(t)
+
+fetched = get_transaction()
+#result = run_budget_engine(previous_month_available, budgeted, fetched)
+print(fetched)

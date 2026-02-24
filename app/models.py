@@ -9,6 +9,7 @@ class transaction:
     memo: str
     category_id: str
 
+@dataclass
 class category:
     id: str
     name: str
@@ -16,6 +17,7 @@ class category:
     activity: float
     available: float
 
+@dataclass
 class budget:
     name: str
     categories: list[str] = field(default_factory=list)
