@@ -1,5 +1,5 @@
 import sqlite3
-from models import transaction, category
+from models import Transaction, Category
 
 
 # Init DB
@@ -43,7 +43,7 @@ def get_transaction():
     
     cursor.execute("SELECT * FROM transactions")
     rows = cursor.fetchall()
-    return [transaction(id=row[0], date=row[1], payee=row[2], amount=row[3], memo=row[4], category_id=row[5]) for row in rows]
+    return [Transaction(id=row[0], date=row[1], payee=row[2], amount=row[3], memo=row[4], category_id=row[5]) for row in rows]
 
 def get_categories():
     connection = sqlite3.connect("budget.db")
@@ -51,7 +51,7 @@ def get_categories():
     
     cursor.execute("SELECT * FROM categories")
     rows = cursor.fetchall()
-    return [category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
+    return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
 
 # TODO Add Remove Functions for transactoins and categories
 

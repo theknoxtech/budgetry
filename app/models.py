@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 
+
 @dataclass
-class transaction:
+class Transaction:
     id: str
     date: str
     payee: str
@@ -10,7 +11,7 @@ class transaction:
     category_id: str
 
 @dataclass
-class category:
+class Category:
     id: str
     name: str
     budgeted: float
@@ -18,7 +19,7 @@ class category:
     available: float
 
 @dataclass
-class budget:
+class Budget:
     name: str
     categories: list[str] = field(default_factory=list)
     transactions: list[str] = field(default_factory=list)
