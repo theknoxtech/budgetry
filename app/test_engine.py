@@ -1,5 +1,6 @@
 from budget_engine import run_budget_engine
 from models import transaction, category, budget
+from database import init_db, save_transaction, save_category
 
 
 # Test categories
@@ -31,5 +32,7 @@ transactions = [
     transaction(id="t4", date="2026-01-04", payee="D", amount=5000.00, memo="", category_id=income)
 ]
 
+init_db()
+save_transaction(transactions[0])
 result = run_budget_engine(previous_month_available, budgeted, transactions)
 print(result)
