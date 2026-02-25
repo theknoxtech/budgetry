@@ -1,4 +1,4 @@
-from database import Transaction, Category, save_transaction, save_category, get_transaction, get_categories
+import database as db
 from datetime import date
 import uuid
 
@@ -37,7 +37,7 @@ def main():
         result = validate_input()
         # Logic for Option 1 Adding Trasaction 
         if result == "1":
-            new_tranaction = Transaction(
+            new_tranaction = db.Transaction(
                 id = str(uuid.uuid4()),
                 date = str(date.today()),
                 payee = input("What company or person did you pay? "),
@@ -47,17 +47,17 @@ def main():
                 # TODO Check if category exists or if needs to be created
                 category_id = input("What category should this transaction be placed in? ")
             )
-            save_transaction(new_tranaction)
+            db.save_transaction(new_tranaction)
             
         # Logic for Option 2 Adding Category
         elif result == "2":
-            new_category = Category(
+            new_category = db.Category(
                 id = str(uuid.uuid4()),
                 name = input("what do you want to name this category? "),
                 budgeted = 0.00,
                 activity = 0.00,
                 available = 0.00
             )
-            save_category(new_category)
+            db.save_category(new_category)
 
 main()
