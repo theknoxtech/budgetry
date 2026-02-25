@@ -34,8 +34,9 @@ def main():
         # TODO Add logic for exit
         print("5. Exit")
         
-        # Logic for option 1
-        if validate_input() == "1":
+        result = validate_input()
+        # Logic for Option 1 Adding Trasaction 
+        if result == "1":
             new_tranaction = Transaction(
                 id = str(uuid.uuid4()),
                 date = str(date.today()),
@@ -48,6 +49,15 @@ def main():
             )
             save_transaction(new_tranaction)
             
-        
+        # Logic for Option 2 Adding Category
+        elif result == "2":
+            new_category = Category(
+                id = str(uuid.uuid4()),
+                name = input("what do you want to name this category? "),
+                budgeted = 0.00,
+                activity = 0.00,
+                available = 0.00
+            )
+            save_category(new_category)
 
 main()

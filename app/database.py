@@ -54,7 +54,7 @@ def get_categories():
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
 
 # TODO Add Remove Functions for transactoins and categories
-
+# TODO Create methods for adding and removing payees
 
 
 

@@ -15,7 +15,7 @@ class Category:
     id: str
     name: str
     budgeted: float
-    activity: float
+    activity: float 
     available: float
 
 @dataclass
