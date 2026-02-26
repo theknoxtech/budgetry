@@ -19,10 +19,16 @@ class Category:
     available: float
 
 @dataclass
+class Payee:
+    id: str
+    name: str
+
+@dataclass
 class Budget:
     name: str
     categories: list[str] = field(default_factory=list)
     transactions: list[str] = field(default_factory=list)
+    payee: list[str] = field(default_factory=list)
     
     def add_category(self, category):
         if category not in self.categories:
@@ -39,3 +45,11 @@ class Budget:
     def remove_transaction(self, transaction):
         if transaction in self.transactions:
             self.transactions.remove(transaction)
+    
+    def add_payee(self, payee):
+        if payee not in self.payee:
+            self.payee.append(payee)
+    
+    def remove_payee(self, payee):
+        if payee in self.payee:
+            self.payee.remove(payee)

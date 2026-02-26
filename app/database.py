@@ -9,6 +9,7 @@ def init_db():
     
     cursor.execute("CREATE TABLE IF NOT EXISTS transactions(id TEXT PRIMARY KEY,date TEXT,payee TEXT,amount REAL,memo TEXT,category_id TEXT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS categories(id TEXT PRIMARY KEY,name TEXT,budgeted REAL,activity REAL,available REAL)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS payees(id TEXT PRIMARY KEY,name TEXT)")
     
     connection.commit()
     connection.close()
