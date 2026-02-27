@@ -1,15 +1,7 @@
 import database as db
 from datetime import date
 import uuid
-
-def validate_input():
-    choice = input("Enter a number for the option you want: ")
-    valid_input = ["1","2","3","4","5"]
-    
-    if choice not in valid_input:
-        raise TypeError("Please enter a number between 1 - 5")
-    else:
-        return choice
+from app.utilies import validate_input
 
 def main():
     db.init_db()
@@ -18,25 +10,28 @@ def main():
         print(
             """
             ##################
-            #### Budgetry ####
+            |    Budgetry    |
+            ------------------
+            |    Main Menu   |
             ##################
-            """)
-        print("1. Add Transaction")
+            
+            """
+            )
+        print("1. Manage Transactions")
         
-        # TODO Add logic for adding category
-        print("2. Add Category") 
+        # TODO Add logic for categorirs_menu
+        print("2. Manage Categories") 
         
-        # TODO Add logic for getting transactions
-        # TODO Add logic to get transactions by month
-        print("3. Get Transactions") 
+        # TODO Add logic for payees_menu
+        print("3. Manage Payees") 
         
-        # TODO Add logic for getting categories
-        print("4. Get Categories")
+        # TODO Add logic for getting reports
+        print("4. Reports")
         
         # TODO Add logic for exit
         print("5. Exit")
         
-        result = validate_input()
+        result = validate_input("1","2","3","4","5")
         # Logic for Option 1 Adding Trasaction 
         if result == "1":
             new_tranaction = db.Transaction(
