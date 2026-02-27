@@ -1,4 +1,6 @@
 
+import os
+
 def validate_input(valid_options):
     choice = input("Enter a number for the option you want: ")
     
@@ -7,3 +9,10 @@ def validate_input(valid_options):
         return None
     else:
         return choice
+
+def clear_terminal():
+    if os.name == "nt":
+        os.system("cls")
+    elif os.name == "posix":
+        os.system("clear")
+        return

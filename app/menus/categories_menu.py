@@ -1,4 +1,4 @@
-from app.utilies import validate_input
+from utils import validate_input
 import database as db
 import uuid
 

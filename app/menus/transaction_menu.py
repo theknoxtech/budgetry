@@ -1,7 +1,7 @@
 import database as db
 from datetime import date
 import uuid
-from app.utilies import validate_input
+from utils import validate_input
 
 def transaction_menu():
     while True:

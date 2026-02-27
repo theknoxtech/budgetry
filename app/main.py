@@ -1,7 +1,11 @@
 import database as db
 from datetime import date
 import uuid
-from app.utilies import validate_input
+from utils import validate_input, clear_terminal
+from menus.transaction_menu import transaction_menu
+from menus.categories_menu import categories_menu
+from menus.payees_menu import payees_menu
+#from menus.reports_menu import reports_menu
 
 def main():
     db.init_db()
@@ -31,30 +35,22 @@ def main():
         # TODO Add logic for exit
         print("5. Exit")
         
-        result = validate_input("1","2","3","4","5")
+        result = validate_input(["1","2","3","4","5"])
         # Logic for Option 1 Adding Trasaction 
         if result == "1":
-            new_tranaction = db.Transaction(
-                id = str(uuid.uuid4()),
-                date = str(date.today()),
-                payee = input("What company or person did you pay? ").lower(),
-                amount = float(input("what is the amount of money spent? ")),
-                memo = input("What was this purchase for? This is for the memo field ").lower(),
-                
-                # TODO Check if category exists or if needs to be created
-                category_id = input("What category should this transaction be placed in? ").lower()
-            )
-            db.add_transaction(new_tranaction)
-            
-        # Logic for Option 2 Adding Category
+            clear_terminal()
+            transaction_menu()
         elif result == "2":
-            new_category = db.Category(
-                id = str(uuid.uuid4()),
-                name = input("what do you want to name this category? ").lower(),
-                budgeted = 0.00,
-                activity = 0.00,
-                available = 0.00
-            )
-            db.add_category(new_category)
+            clear_terminal()
+            categories_menu()
+        elif result == "3":
+            clear_terminal()
+            payees_menu()
+        elif result == "4":
+            clear_terminal()
+            #reports_menu()
+        elif result == "5":
+            exit()
+    
 
 main()
