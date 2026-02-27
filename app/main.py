@@ -40,24 +40,24 @@ def main():
             new_tranaction = db.Transaction(
                 id = str(uuid.uuid4()),
                 date = str(date.today()),
-                payee = input("What company or person did you pay? "),
+                payee = input("What company or person did you pay? ").lower(),
                 amount = float(input("what is the amount of money spent? ")),
-                memo = input("What was this purchase for? This is for the memo field "),
+                memo = input("What was this purchase for? This is for the memo field ").lower(),
                 
                 # TODO Check if category exists or if needs to be created
-                category_id = input("What category should this transaction be placed in? ")
+                category_id = input("What category should this transaction be placed in? ").lower()
             )
-            db.save_transaction(new_tranaction)
+            db.add_transaction(new_tranaction)
             
         # Logic for Option 2 Adding Category
         elif result == "2":
             new_category = db.Category(
                 id = str(uuid.uuid4()),
-                name = input("what do you want to name this category? "),
+                name = input("what do you want to name this category? ").lower(),
                 budgeted = 0.00,
                 activity = 0.00,
                 available = 0.00
             )
-            db.save_category(new_category)
+            db.add_category(new_category)
 
 main()
