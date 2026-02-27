@@ -12,6 +12,8 @@ def validate_input():
         return choice
 
 def main():
+    db.init_db()
+    
     while True:
         print(
             """

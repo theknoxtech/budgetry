@@ -60,8 +60,20 @@ def get_categories():
 
 
 # TODO Create methods for adding and removing payees
+def get_payees():
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    
+    cursor.execute("SELECT * FROM payees")
+    rows = cursor.fetchall()
+    return [Payee(id=row[0], name=row[1]) for row in rows]
 
-
-
-init_db()
+def delete_payees(payee):
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    
+    cursor.execute("DELETE FROM payees WHERE id = ?", (payee.id,))
+    
+    connection.commit()
+    connection.close()
 
