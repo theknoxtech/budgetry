@@ -23,13 +23,10 @@ def transaction_menu():
         
         if choice == "1":
             categories = get_categories(names_only=False)
-            
-            valid_range = [str(num) for num in range(1, len(categories), + 1)]
-            
-            
+            valid_range = [str(num) for num in range(1, len(categories) + 1)]
             category_choice = validate_input(valid_range)
             get_category_index = int(category_choice) -1
-            get_category_id = categories[get_category_index].id
+            get_category_id = categories[get_category_index].name
             
             new_transaction = Transaction(
                 id = str(uuid.uuid4()),

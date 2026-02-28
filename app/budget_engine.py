@@ -43,5 +43,6 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         "overspent_categories ": overspent_categories
         }
 
-# TODO: Remove this line or wrap in 'if __name__ == "__main__":' so it doesn't crash on import
-run_budget_engine()
+if __name__ == "__main__":
+    # Example usage or testing
+    pass
