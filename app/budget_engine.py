@@ -2,16 +2,6 @@ from collections import defaultdict
 from models import Transaction, Category, Budget
 
 
-'''
-### Basic Flow ###
-1. Scan transactions → calculate:
-   - activity per category
-   - total income
-2. Calculate available per category
-3. Calculate To Be Budgeted (TBB)
-4. Detect overspending
-'''
-
 
 def run_budget_engine(previous_month_available, budgeted, transactions):
     activity = {}
@@ -41,14 +31,7 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
     for category_id, avail_amount in available.items():
         if avail_amount < 0:
             overspent_categories[category_id] = avail_amount
-    '''
-    print("Income:", income_total)
-    print("Available: ", dict(available))    
-    print("Activity:", dict(activity))
-    print("To Be Budgeted: ", to_be_budgeted)
-    print("Overspent: ", overspent_categories)
-    '''
-    
+            
     return {
         "income_total ":income_total,
         "available ": available,
@@ -56,3 +39,4 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         "to_be_budgeted ": to_be_budgeted,
         "overspent_categories ": overspent_categories
         }
+run_budget_engine()

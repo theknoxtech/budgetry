@@ -50,10 +50,15 @@ def add_category(category):
 
 # TODO Add DELETE category
 
-def get_categories():
+def get_categories(names_only=False):
     connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
     
+    if names_only:
+        cursor.execute("SELECT name FROM categories")
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+
     cursor.execute("SELECT * FROM categories")
     rows = cursor.fetchall()
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
@@ -76,4 +81,3 @@ def delete_payees(payee):
     
     connection.commit()
     connection.close()
-
