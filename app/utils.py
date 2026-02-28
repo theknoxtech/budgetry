@@ -2,13 +2,12 @@
 import os
 
 def validate_input(valid_options):
-    choice = input("Enter a number for the option you want: ")
-    
-    if choice not in valid_options:
+    while True:
+        choice = input("Enter a number for the option you want: ")
+        
+        if choice in valid_options:
+            return choice
         print(f"Invalid input. Please enter one of: {', '.join(valid_options)}")
-        return None
-    else:
-        return choice
 
 def clear_terminal():
     if os.name == "nt":

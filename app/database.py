@@ -52,7 +52,7 @@ def add_category(category):
 # TODO: Implement delete_category(category_id)
 # TODO: Implement update_category(category_id, updated_category_obj)
 
-def get_categories(names_only=False):
+def get_categories(names_only=False, select_category=False):
     connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
     

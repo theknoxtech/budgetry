@@ -22,9 +22,14 @@ def transaction_menu():
         choice = validate_input(["1", "2", "3","4","5"])
         
         if choice == "1":
-            categories = get_categories(names_only=True)
+            categories = get_categories(names_only=False)
             
-            print(" ,".join(categories))
+            valid_range = [str(num) for num in range(1, len(categories), + 1)]
+            
+            
+            category_choice = validate_input(valid_range)
+            get_category_index = int(category_choice) -1
+            get_category_id = categories[get_category_index].id
             
             new_transaction = Transaction(
                 id = str(uuid.uuid4()),
@@ -33,7 +38,8 @@ def transaction_menu():
                 amount = float(input("What is the amount of money spent? ")),
                 memo = input("What was this purchase for? ").lower(),
                 # TODO add category view when choosing categories
-                category_id = input("What category should this be placed in? ")
-            )
+                category_id = input(f"Please choose a category for this transaction {get_category_id}")
+                )
+            
             add_transaction(new_transaction)
             print("\nTransaction added successfully!")
