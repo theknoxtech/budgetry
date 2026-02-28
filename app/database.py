@@ -34,7 +34,8 @@ def get_transaction():
     rows = cursor.fetchall()
     return [Transaction(id=row[0], date=row[1], payee=row[2], amount=row[3], memo=row[4], category_id=row[5]) for row in rows]
 
-# TODO Add DELETE transaction
+# TODO: Implement delete_transaction(transaction_id)
+# TODO: Implement update_transaction(transaction_id, updated_transaction_obj)
 
 def add_category(category):
     connection = sqlite3.connect("budget.db")
@@ -48,7 +49,8 @@ def add_category(category):
     connection.commit()
     connection.close()
 
-# TODO Add DELETE category
+# TODO: Implement delete_category(category_id)
+# TODO: Implement update_category(category_id, updated_category_obj)
 
 def get_categories(names_only=False):
     connection = sqlite3.connect("budget.db")
@@ -64,7 +66,7 @@ def get_categories(names_only=False):
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
 
 
-# TODO Create methods for adding and removing payees
+# TODO: Implement add_payee(payee)
 def get_payees():
     connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
@@ -81,3 +83,5 @@ def delete_payees(payee):
     
     connection.commit()
     connection.close()
+
+# TODO: Implement update_payee(payee_id, updated_payee_obj)

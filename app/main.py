@@ -1,6 +1,4 @@
 import database as db
-from datetime import date
-import uuid
 from utils import validate_input, clear_terminal
 from menus.transaction_menu import transaction_menu
 from menus.categories_menu import categories_menu

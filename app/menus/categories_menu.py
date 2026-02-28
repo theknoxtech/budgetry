@@ -29,3 +29,16 @@ def categories_menu():
                 available = 0.00
             )
             add_category(new_category)
+
+        # TODO: Implement logic for Option 2: Update Category
+        # elif choice == "2":
+
+        # TODO: Implement logic for Option 3: Delete Category
+        # elif choice == "3":
+
+        # TODO: Implement logic for Option 4: View Categories
+        # elif choice == "4":
+            # Call get_categories() and print them nicely
+
+        elif choice == "5":
+            break

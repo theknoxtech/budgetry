@@ -21,6 +21,8 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
     for category_id, budget in budgeted.items():
         previous_month = previous_month_available.get(category_id, 0.0)
         spent_money = activity.get(category_id, 0.0)
+        # TODO: Verify math logic. If spending is negative, subtracting it increases available amount.
+        # Should likely be: previous_month + budget + spent_money (if spent_money is negative)
         available[category_id] = previous_month + budget - spent_money
     
     # Calculate Amount to be Budgeted
@@ -32,6 +34,7 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         if avail_amount < 0:
             overspent_categories[category_id] = avail_amount
             
+    # TODO: Fix dictionary keys (remove trailing spaces like "available ") to make them easier to access
     return {
         "income_total ":income_total,
         "available ": available,
@@ -39,4 +42,6 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         "to_be_budgeted ": to_be_budgeted,
         "overspent_categories ": overspent_categories
         }
+
+# TODO: Remove this line or wrap in 'if __name__ == "__main__":' so it doesn't crash on import
 run_budget_engine()
