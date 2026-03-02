@@ -23,7 +23,7 @@ def categories_menu():
         if choice == "1":
             new_category = Category(
                 id = str(uuid.uuid4()),
-                name = input("what do you want to name this category? ").lower(),
+                name = input("what do you want to name this category? "),
                 budgeted = 0.00,
                 activity = 0.00,
                 available = 0.00
