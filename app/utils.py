@@ -16,7 +16,7 @@ class Prompt(RichPrompt):
 
 def validate_input(valid_options):
     while True:
-        choice = Prompt.ask("[prompt]Enter a number for the option you want: [/]")
+        choice = Prompt.ask("[prompt]Enter a number for the option you want[/]")
         
         if choice in valid_options:
             return choice

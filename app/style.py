@@ -6,7 +6,7 @@ custom_theme = Theme({
     "warning":"bright_yellow",
     "error":"bright_red",
     "success":"bright_green",
-    "prompt":"bright_magenta",
+    "prompt":"magenta1",
     "menu_option":"orange3"
 })
 

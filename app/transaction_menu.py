@@ -1,13 +1,16 @@
 from database import Transaction, get_transaction, add_transaction, get_categories, update_transaction
 from datetime import date
+from style import custom_theme
 import uuid
-from utils import validate_input, clear_terminal
+from utils import validate_input, clear_terminal, Prompt
 from rich.table import Table
 from rich.console import Console
 
+console = Console(theme=custom_theme)
+Prompt.console = console
+
 def transaction_menu():
     while True:
-        console = Console()
         print(
             """
             ###########################
@@ -42,14 +45,14 @@ def transaction_menu():
             new_transaction = Transaction(
                 id = str(uuid.uuid4()),
                 date = str(date.today()),
-                payee = input("What company or person did you pay? ").lower(),
-                amount = float(input("What is the amount of money spent? ")),
-                memo = input("What was this purchase for? ").lower(),
+                payee = Prompt.ask("[prompt]What company or person did you pay? [/]").lower(),
+                amount = float(Prompt.ask("[prompt]What is the amount of money spent? [/]")),
+                memo = Prompt.ask("[prompt]What was this purchase for? [/]").lower(),
                 category_id = get_category_id
             )
             add_transaction(new_transaction)
             clear_terminal()
-            console.print("\nTransaction added successfully!")
+            console.print("\n[success]Transaction added successfully! [/]")
             
             # Update transaction
         elif choice == "2":
@@ -79,7 +82,7 @@ def transaction_menu():
             clear_terminal()
             console.print(transaction_table)
             
-            select_transaction = input("\nEnter the transaction number you want to update ")
+            select_transaction = Prompt.ask("\n[prompt]Enter the transaction number you want to update [/]")
             
             # Outputs table with selected transaction
             transaction_index = int(select_transaction) -1
