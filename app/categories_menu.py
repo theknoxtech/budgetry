@@ -1,21 +1,27 @@
-from utils import validate_input
+from utils import validate_input, Prompt, clear_terminal
 from database import Category, add_category
 import uuid
+from rich.console import Console
+from style import custom_theme
 
+clear_terminal()
 def categories_menu():
+    console = Console(theme=custom_theme)
+    Prompt.console = console
+    
     while True:
-        print(
+        console.print(
             """
             ###########################
             #   Manage Categories   #
             ###########################
-            """)
+            """, style="sky_blue1")
         
-        print("1. Add Category")
-        print("2. Update Category")
-        print("3. Delete Category")
-        print("4. View Categories")
-        print("5. Back to Main Menu")
+        console.print("1. Add Category", style="menu_option")
+        console.print("2. Update Category", style="menu_option")
+        console.print("3. Delete Category", style="menu_option")
+        console.print("4. View Categories", style="menu_option")
+        console.print("5. Back to Main Menu", style="menu_option")
         
         # We pass the valid options for this specific menu
         choice = validate_input(["1", "2", "3","4","5"])
@@ -23,7 +29,7 @@ def categories_menu():
         if choice == "1":
             new_category = Category(
                 id = str(uuid.uuid4()),
-                name = input("what do you want to name this category? "),
+                name = Prompt.ask("what do you want to name this category?"),
                 budgeted = 0.00,
                 activity = 0.00,
                 available = 0.00

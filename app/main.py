@@ -1,5 +1,5 @@
 import database as db
-from utils import validate_input, clear_terminal, Prompt
+from utils import validate_input, Prompt
 from transaction_menu import transaction_menu
 from categories_menu import categories_menu
 from payees_menu import payees_menu
@@ -38,23 +38,19 @@ def main():
         # TODO Add logic for exit1
         console.print("5. Exit", style="menu_option")
         
-        
-        
         result = validate_input(["1","2","3","4","5"])
-        # Logic for Option 1 Adding Trasaction 
         if result == "1":
-            clear_terminal()
             transaction_menu()
+            
         elif result == "2":
-            clear_terminal()
+            
             categories_menu()
         elif result == "3":
-            clear_terminal()
+            
             payees_menu()
         elif result == "4":
-            clear_terminal()
             #reports_menu()
-        elif result == "5":
+        #elif result == "5":
             exit()
     
 

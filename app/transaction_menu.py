@@ -11,7 +11,9 @@ from rich.console import Console
 def transaction_menu():
     console = Console(theme=custom_theme)
     Prompt.console = console
+    
     while True:
+        
         console.print(
             """
             ###########################
@@ -19,11 +21,11 @@ def transaction_menu():
             ###########################
             """, style="sky_blue1")
         
-        console.print("1. Add Transaction")
-        console.print("2. Update Transaction")
-        console.print("3. Delete Transaction")
-        console.print("4. View Transactions")
-        console.print("5. Back to Main Menu")
+        console.print("1. Add Transaction", style="menu_option")
+        console.print("2. Update Transaction", style="menu_option")
+        console.print("3. Delete Transaction", style="menu_option")
+        console.print("4. View Transactions", style="menu_option")
+        console.print("5. Back to Main Menu", style="menu_option")
         
         choice = validate_input(["1", "2", "3","4","5"])
         

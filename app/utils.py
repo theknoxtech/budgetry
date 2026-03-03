@@ -27,4 +27,4 @@ def clear_terminal():
         os.system("cls")
     elif os.name == "posix":
         os.system("clear")
-        return
+        

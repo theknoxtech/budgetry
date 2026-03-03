@@ -1,21 +1,27 @@
-from utils import validate_input
+from utils import validate_input, Prompt, clear_terminal
 import database as db
 import uuid
+from rich.console import Console
+from style import custom_theme
 
+clear_terminal()
 def payees_menu():
+    console = Console(theme=custom_theme)
+    Prompt.console = console
+    
     while True:
-        print(
+        console.print(
             """
             ##################### 
             #   Manage Payees   #
             #####################
-            """)
+            """, style="sky_blue1")
         
-        print("1. Add Payee")
-        print("2. Update Payee")
-        print("3. Delete Payee")
-        print("4. View Payeed")
-        print("5. Back to Main Menu")
+        console.print("1. Add Payee", style="menu_option")
+        console.print("2. Update Payee", style="menu_option")
+        console.print("3. Delete Payee", style="menu_option")
+        console.print("4. View Payeed", style="menu_option")
+        console.print("5. Back to Main Menu", style="menu_option")
         
         # We pass the valid options for this specific menu
         choice = validate_input(["1", "2", "3","4","5"])
@@ -24,7 +30,7 @@ def payees_menu():
             # TODO: FIX BUG - This is currently creating a Category, but it should create a Payee object
             new_category = db.Category(
                 id = str(uuid.uuid4()),
-                name = input("what do you want to name this category? ").lower(),
+                name = Prompt.ask("what do you want to name this category?").lower(),
                 budgeted = 0.00,
                 activity = 0.00,
                 available = 0.00
