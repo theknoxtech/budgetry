@@ -6,10 +6,11 @@ from utils import validate_input, clear_terminal, Prompt
 from rich.table import Table
 from rich.console import Console
 
-console = Console(theme=custom_theme)
-Prompt.console = console
+
 
 def transaction_menu():
+    console = Console(theme=custom_theme)
+    Prompt.console = console
     while True:
         print(
             """
@@ -129,4 +130,4 @@ def transaction_menu():
                         category_id = new_category
                     )
                     update_transaction(updated_transaction)
-                    print("\nTransaction updated successfully")
+                    console.print("\n[success]Transaction updated successfully [/]")

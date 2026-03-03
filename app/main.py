@@ -6,13 +6,13 @@ from payees_menu import payees_menu
 from rich.console import Console
 from style import custom_theme
 
-console = Console(theme=custom_theme)
-Prompt.console = console
 # TODO from menus.reports_menu import reports_menu
 
 def main():
     db.init_db()
     console = Console(theme=custom_theme)
+    Prompt.console = console
+    
     while True:
         console.print(
             """
