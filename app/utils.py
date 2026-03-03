@@ -1,5 +1,6 @@
 
 import os
+from rich import table
 
 def validate_input(valid_options):
     while True:
@@ -15,3 +16,5 @@ def clear_terminal():
     elif os.name == "posix":
         os.system("clear")
         return
+
+

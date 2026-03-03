@@ -2,6 +2,8 @@ from database import Transaction, get_transaction, add_transaction, get_categori
 from datetime import date
 import uuid
 from utils import validate_input, clear_terminal
+from rich.table import Table
+from rich.console import Console
 
 def transaction_menu():
     while True:
@@ -18,12 +20,13 @@ def transaction_menu():
         print("4. View Transactions")
         print("5. Back to Main Menu")
         
-        # We pass the valid options for this specific menu
         choice = validate_input(["1", "2", "3","4","5"])
         
+        # Add transaction
         if choice == "1":
             clear_terminal()
             categories = get_categories(names_only=False)
+            
             
             print("--- Available Categories ---")
             for index, category in enumerate(categories, start=1):
@@ -41,8 +44,58 @@ def transaction_menu():
                 payee = input("What company or person did you pay? ").lower(),
                 amount = float(input("What is the amount of money spent? ")),
                 memo = input("What was this purchase for? ").lower(),
-                # TODO add category view when choosing categories
                 category_id = get_category_id
             )
             add_transaction(new_transaction)
+            clear_terminal()
             print("\nTransaction added successfully!")
+            
+            # Update transaction
+        elif choice == "2":
+            clear_terminal()
+            transactions = get_transaction()
+            
+            console = Console()
+            transaction_table = Table(title="Transactions")
+            transaction_table.add_column("Transaction Number", style="cyan", justify="center")
+            transaction_table.add_column("Date", style="magenta", justify="center")
+            transaction_table.add_column("Payee", style="yellow", justify="right")
+            transaction_table.add_column("Category", style="green", justify="right")
+            transaction_table.add_column("Memo", style="white", justify="right")
+            transaction_table.add_column("Amount", style="blue", justify="center")
+            
+            for index, transaction in enumerate(transactions, start=1):
+                transaction_table.add_row(
+                    str(index),
+                    transaction.date,
+                    transaction.payee,
+                    transaction.category_id,
+                    transaction.memo,
+                    f"${transaction.amount:.2f}"
+                )
+            
+            clear_terminal()
+            console.print(transaction_table)
+            
+            select_transaction = input("\nEnter the transaction number you want to update ")
+            
+            transaction_index = int(select_transaction) -1
+            if 0 <= transaction_index < len(transactions):
+                transaction_to_update = transactions[transaction_index]
+                
+                transaction_update_table = Table(title="Selected Transaction to Update")
+                transaction_update_table.add_column("Transaction Number", style="cyan", justify="center")
+                transaction_update_table.add_column("Date", style="magenta", justify="center")
+                transaction_update_table.add_column("Payee", style="yellow", justify="right")
+                transaction_update_table.add_column("Category", style="green", justify="right")
+                transaction_update_table.add_column("Memo", style="white", justify="right")
+                transaction_update_table.add_column("Amount", style="blue", justify="center")
+                transaction_update_table.add_row(
+                    str(transaction_to_update.id),
+                    transaction_to_update.date,
+                    transaction_to_update.payee,
+                    transaction_to_update.category_id,
+                    transaction_to_update.memo,
+                    f"${transaction_to_update.amount:.2f}"
+                )
+                console.print(transaction_update_table)
