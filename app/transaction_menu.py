@@ -7,6 +7,7 @@ from rich.console import Console
 
 def transaction_menu():
     while True:
+        console = Console()
         print(
             """
             ###########################
@@ -14,11 +15,11 @@ def transaction_menu():
             ###########################
             """)
         
-        print("1. Add Transaction")
-        print("2. Update Transaction")
-        print("3. Delete Transaction")
-        print("4. View Transactions")
-        print("5. Back to Main Menu")
+        console.print("1. Add Transaction")
+        console.print("2. Update Transaction")
+        console.print("3. Delete Transaction")
+        console.print("4. View Transactions")
+        console.print("5. Back to Main Menu")
         
         choice = validate_input(["1", "2", "3","4","5"])
         
@@ -28,9 +29,9 @@ def transaction_menu():
             categories = get_categories(names_only=False)
             
             
-            print("--- Available Categories ---")
+            console.print("--- Available Categories ---")
             for index, category in enumerate(categories, start=1):
-                print(f"{index}. {category.name}")
+                console.print(f"{index}. {category.name}")
                 
             valid_range = [str(num) for num in range(1, len(categories) + 1)]
             category_choice = validate_input(valid_range)
@@ -48,7 +49,7 @@ def transaction_menu():
             )
             add_transaction(new_transaction)
             clear_terminal()
-            print("\nTransaction added successfully!")
+            console.print("\nTransaction added successfully!")
             
             # Update transaction
         elif choice == "2":

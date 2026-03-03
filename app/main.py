@@ -1,15 +1,20 @@
 import database as db
-from utils import validate_input, clear_terminal
-from menus.transaction_menu import transaction_menu
-from menus.categories_menu import categories_menu
-from menus.payees_menu import payees_menu
-#from menus.reports_menu import reports_menu
+from utils import validate_input, clear_terminal, Prompt
+from transaction_menu import transaction_menu
+from categories_menu import categories_menu
+from payees_menu import payees_menu
+from rich.console import Console
+from style import custom_theme
+
+console = Console(theme=custom_theme)
+Prompt.console = console
+# TODO from menus.reports_menu import reports_menu
 
 def main():
     db.init_db()
-    
+    console = Console(theme=custom_theme)
     while True:
-        print(
+        console.print(
             """
             ##################
             |    Budgetry    |
@@ -17,21 +22,23 @@ def main():
             |    Main Menu   |
             ##################
             
-            """
+            """, style="sky_blue1"
             )
-        print("1. Manage Transactions")
+        console.print("1. Manage Transactions", style="menu_option")
         
         # TODO Add logic for categorirs_menu
-        print("2. Manage Categories") 
+        console.print("2. Manage Categories", style="menu_option") 
         
         # TODO Add logic for payees_menu
-        print("3. Manage Payees") 
+        console.print("3. Manage Payees", style="menu_option") 
         
-        # TODO Add logic for getting reports
-        print("4. Reports")
+        # TODO Add logic for getting reports1
+        console.print("4. Reports", style="menu_option")
         
         # TODO Add logic for exit1
-        print("5. Exit")
+        console.print("5. Exit", style="menu_option")
+        
+        
         
         result = validate_input(["1","2","3","4","5"])
         # Logic for Option 1 Adding Trasaction 
