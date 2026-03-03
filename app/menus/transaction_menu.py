@@ -109,11 +109,11 @@ def transaction_menu():
                 
                 if current_transaction:
                     print("\nEditing transaction (Press Enter to Keep Current Data)")
-                    new_date = input(f"Enter a new date: Current Date ({current_transaction.date})") or current_transaction.date
-                    new_payee = input(f"Enter a new payee: Current Payee ({current_transaction.payee})") or current_transaction.payee
-                    new_category = input(f"Enter a new category: Current Category ({current_transaction.category_id})") or current_transaction.category_id
-                    new_memo = input(f"Enter a new memo: Current Memo ({current_transaction.memo})") or current_transaction.memo
-                    new_amount = input(f"Enter a new amount: Current Amount ({current_transaction.amount})") 
+                    new_date = input(f"Current Date ({current_transaction.date}): Enter a new date") or current_transaction.date
+                    new_payee = input(f"Current Payee ({current_transaction.payee}): Enter a new payee") or current_transaction.payee
+                    new_category = input(f"Current Category ({current_transaction.category_id}): Enter a new category") or current_transaction.category_id
+                    new_memo = input(f"Current Memo ({current_transaction.memo}): Enter a new memo") or current_transaction.memo
+                    new_amount = input(f"Current Amount ({current_transaction.amount}): Enter a new amount") 
                     input_amount = float(new_amount) if new_amount else current_transaction.amount
                     
                     updated_transaction = Transaction(
