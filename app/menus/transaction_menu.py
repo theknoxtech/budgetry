@@ -1,4 +1,4 @@
-from database import Transaction, get_transaction, add_transaction, get_categories
+from database import Transaction, get_transaction, add_transaction, get_categories, update_transaction
 from datetime import date
 import uuid
 from utils import validate_input, clear_terminal
@@ -55,6 +55,7 @@ def transaction_menu():
             clear_terminal()
             transactions = get_transaction()
             
+            # Outputs a table of transactions to update
             console = Console()
             transaction_table = Table(title="Transactions")
             transaction_table.add_column("Transaction Number", style="cyan", justify="center")
@@ -79,6 +80,7 @@ def transaction_menu():
             
             select_transaction = input("\nEnter the transaction number you want to update ")
             
+            # Outputs table with selected transaction
             transaction_index = int(select_transaction) -1
             if 0 <= transaction_index < len(transactions):
                 transaction_to_update = transactions[transaction_index]
@@ -99,3 +101,28 @@ def transaction_menu():
                     f"${transaction_to_update.amount:.2f}"
                 )
                 console.print(transaction_update_table)
+                
+                # Get current transaction details
+                # Asks user to update and if not keeps current data
+                # Outputs a new transaction object
+                current_transaction = transaction_to_update
+                
+                if current_transaction:
+                    print("\nEditing transaction (Press Enter to Keep Current Data)")
+                    new_date = input(f"Enter a new date: Current Date ({current_transaction.date})") or current_transaction.date
+                    new_payee = input(f"Enter a new payee: Current Payee ({current_transaction.payee})") or current_transaction.payee
+                    new_category = input(f"Enter a new category: Current Category ({current_transaction.category_id})") or current_transaction.category_id
+                    new_memo = input(f"Enter a new memo: Current Memo ({current_transaction.memo})") or current_transaction.memo
+                    new_amount = input(f"Enter a new amount: Current Amount ({current_transaction.amount})") 
+                    input_amount = float(new_amount) if new_amount else current_transaction.amount
+                    
+                    updated_transaction = Transaction(
+                        id = current_transaction.id,
+                        date = new_date,
+                        payee = new_payee,
+                        amount = input_amount,
+                        memo = new_memo,
+                        category_id = new_category
+                    )
+                    update_transaction(updated_transaction)
+                    print("\nTransaction updated successfully")

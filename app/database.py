@@ -35,7 +35,27 @@ def get_transaction():
     return [Transaction(id=row[0], date=row[1], payee=row[2], amount=row[3], memo=row[4], category_id=row[5]) for row in rows]
 
 # TODO: Implement delete_transaction(transaction_id)
-# TODO: Implement update_transaction(transaction_id, updated_transaction_obj)
+
+def update_transaction(transaction):
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    query = """
+        UPDATE transactions 
+        SET date = ?, payee = ?, amount = ?, memo = ?, category_id = ? 
+        WHERE id = ?
+    """
+    values = (
+        transaction.date, 
+        transaction.payee, 
+        transaction.amount, 
+        transaction.memo, 
+        transaction.category_id, 
+        transaction.id
+    )
+    
+    cursor.execute(query, values)
+    connection.commit()
+    connection.close()
 
 def add_category(category):
     connection = sqlite3.connect("budget.db")

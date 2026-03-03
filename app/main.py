@@ -30,7 +30,7 @@ def main():
         # TODO Add logic for getting reports
         print("4. Reports")
         
-        # TODO Add logic for exit
+        # TODO Add logic for exit1
         print("5. Exit")
         
         result = validate_input(["1","2","3","4","5"])
