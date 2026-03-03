@@ -1,4 +1,4 @@
-from database import Transaction, get_transaction, add_transaction, get_categories, update_transaction
+from database import Transaction, get_transaction, add_transaction, get_categories, update_transaction, delete_transaction
 from datetime import date
 from style import custom_theme
 import uuid
@@ -12,12 +12,12 @@ def transaction_menu():
     console = Console(theme=custom_theme)
     Prompt.console = console
     while True:
-        print(
+        console.print(
             """
             ###########################
             #   Manage Transactions   #
             ###########################
-            """)
+            """, style="sky_blue1")
         
         console.print("1. Add Transaction")
         console.print("2. Update Transaction")
@@ -33,7 +33,7 @@ def transaction_menu():
             categories = get_categories(names_only=False)
             
             
-            console.print("--- Available Categories ---")
+            console.print("--- Available Categories ---",style="info")
             for index, category in enumerate(categories, start=1):
                 console.print(f"{index}. {category.name}")
                 
@@ -131,3 +131,90 @@ def transaction_menu():
                     )
                     update_transaction(updated_transaction)
                     console.print("\n[success]Transaction updated successfully [/]")
+        elif choice == "3":
+            
+            clear_terminal()
+            transactions = get_transaction()
+            
+            # Outputs a table of transactions to delete
+            console = Console()
+            transaction_table = Table(title="Transactions")
+            transaction_table.add_column("Transaction Number", style="cyan", justify="center")
+            transaction_table.add_column("Date", style="magenta", justify="center")
+            transaction_table.add_column("Payee", style="yellow", justify="right")
+            transaction_table.add_column("Category", style="green", justify="right")
+            transaction_table.add_column("Memo", style="white", justify="right")
+            transaction_table.add_column("Amount", style="blue", justify="center")
+            
+            for index, transaction in enumerate(transactions, start=1):
+                transaction_table.add_row(
+                    str(index),
+                    transaction.date,
+                    transaction.payee,
+                    transaction.category_id,
+                    transaction.memo,
+                    f"${transaction.amount:.2f}"
+                )
+            
+            clear_terminal()
+            console.print(transaction_table)
+            
+            select_transaction = Prompt.ask("\n[prompt]Enter the transaction number you want to delete [/]")
+            
+            # Outputs table with selected transaction
+            transaction_index = int(select_transaction) -1
+            if 0 <= transaction_index < len(transactions):
+                transaction_to_delete = transactions[transaction_index]
+                
+                transaction_delete_table = Table(title="Selected Transaction to Delete")
+                transaction_delete_table.add_column("Transaction Number", style="cyan", justify="center")
+                transaction_delete_table.add_column("Date", style="magenta", justify="center")
+                transaction_delete_table.add_column("Payee", style="yellow", justify="right")
+                transaction_delete_table.add_column("Category", style="green", justify="right")
+                transaction_delete_table.add_column("Memo", style="white", justify="right")
+                transaction_delete_table.add_column("Amount", style="blue", justify="center")
+                transaction_delete_table.add_row(
+                    str(transaction_to_delete.id),
+                    transaction_to_delete.date,
+                    transaction_to_delete.payee,
+                    transaction_to_delete.category_id,
+                    transaction_to_delete.memo,
+                    f"${transaction_to_delete.amount:.2f}"
+                )
+                console.print(transaction_delete_table)
+                current_transaction = transaction_to_delete
+                
+                if current_transaction:
+                    transaction_to_delete = [current_transaction.id]
+                    
+                    delete_transaction(transaction_to_delete)
+                    console.print("\n[success]Transaction deleted successfully [/]")
+        elif choice == "4":
+            clear_terminal()
+            transactions = get_transaction()
+            
+            # Outputs a table of transactions to update
+            console = Console()
+            transaction_table = Table(title="Transactions")
+            transaction_table.add_column("Transaction Number", style="cyan", justify="center")
+            transaction_table.add_column("Date", style="magenta", justify="center")
+            transaction_table.add_column("Payee", style="yellow", justify="right")
+            transaction_table.add_column("Category", style="green", justify="right")
+            transaction_table.add_column("Memo", style="white", justify="right")
+            transaction_table.add_column("Amount", style="blue", justify="center")
+            
+            for index, transaction in enumerate(transactions, start=1):
+                transaction_table.add_row(
+                    str(index),
+                    transaction.date,
+                    transaction.payee,
+                    transaction.category_id,
+                    transaction.memo,
+                    f"${transaction.amount:.2f}"
+                )
+            
+            clear_terminal()
+            console.print(transaction_table)
+        elif choice == "5":
+            clear_terminal()
+            break
