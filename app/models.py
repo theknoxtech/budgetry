@@ -53,3 +53,4 @@ class Budget:
     def remove_payee(self, payee):
         if payee in self.payee:
             self.payee.remove(payee)
+
