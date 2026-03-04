@@ -1,7 +1,8 @@
 import customtkinter
 from models import Budget, Transaction, Category, Payee
 from database import get_categories
-from datetime import date
+from datetime import datetime
+from utils import validate_input
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -10,6 +11,8 @@ class App(customtkinter.CTk):
         self.title("Budgetry")
         
         self.budget = Budget(name="Main Budget")
+        
+        
 
 class TransactionWindow(customtkinter.CTkToplevel):
     def __init__(self, master, on_save_callback, categories):
@@ -19,8 +22,10 @@ class TransactionWindow(customtkinter.CTkToplevel):
         
         # TODO Change to date selector
         
-        self.date = customtkinter.CTkEntry(self,placeholder_text="Date")
+        self.date = customtkinter.CTkEntry(self,placeholder_text="YYYY-MM-DD")
         self.date.pack(pady=10)
+        today = datetime.now().strftime("%Y-%m-%d")
+        self.date.insert(0,today)
         
         
         # TODO Change to dropdown
@@ -44,6 +49,7 @@ class TransactionWindow(customtkinter.CTkToplevel):
         self.save_button.pack(pady=20)
         
     def handle_save(self):
+        
         date = self.date.get()
         payee = self.payee.get()
         
@@ -53,7 +59,7 @@ class TransactionWindow(customtkinter.CTkToplevel):
         memo = self.memo.get()
         amount = float(self.amount.get())
         
-        new_transaction = Transaction(date, payee, category_id, memo, amount)
+        new_transaction = Transaction(date, payee, amount, memo, category_id)
         self.on_save_callback(new_transaction)
         self.destroy()
         
