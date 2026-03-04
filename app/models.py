@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
-import customtkinter
-
-
+import uuid
 
 
 @dataclass
 class Transaction:
-    id: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     date: str
     payee: str
     amount: float
@@ -15,7 +13,7 @@ class Transaction:
 
 @dataclass
 class Category:
-    id: str
+    id: str = str(uuid.uuid4())
     name: str
     budgeted: float
     activity: float 
