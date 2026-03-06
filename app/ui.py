@@ -49,7 +49,7 @@ class Toolbar(customtkinter.CTkFrame):
         placeholder_btn_4 = customtkinter.CTkButton(self, text="Placeholder")
         placeholder_btn_4.grid(row=0, column=3, padx=10, pady=10)
         
-class MainView(customtkinter.CTkFrame):
+class Overview(customtkinter.CTkFrame):
     def __init__(self,master):
         super().__init__(master)
         
@@ -58,19 +58,29 @@ class MainView(customtkinter.CTkFrame):
         self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
+        self.grid_rowconfigure(3, weight=0)
         
-        #self.grid_rowconfigure(1, weight=1)
+        self.total_amount_available_label = customtkinter.CTkLabel(self, text="Total Available Funds")
+        self.total_amount_available_label.grid(row=2, column=0)
+        self.total_amount_available_frame = customtkinter.CTkFrame(self, height=200, width=300)
+        self.total_amount_available_frame.grid(row=3, column=0)
         
         self.amount_spent_label = customtkinter.CTkLabel(self, text="Amount Spent")
         self.amount_spent_label.grid(row=0, column=0)
-        self.amount_spent_frame = customtkinter.CTkFrame(self, bg_color="yellow")
+        self.amount_spent_frame = customtkinter.CTkFrame(self,height=200, width=300)
         self.amount_spent_frame.grid(row=1, column=0)
         
-        total_income_label = customtkinter.CTkLabel(self, text="Total Monthly Income")
-        total_income_label.grid(row=0, column=1, padx=2, pady=2)
+        self.total_income_label = customtkinter.CTkLabel(self, text="Total Monthly Income")
+        self.total_income_label.grid(row=0, column=1, padx=2, pady=2)
+        self.total_income_frame = customtkinter.CTkFrame(self, height=200, width=300)
+        self.total_income_frame.grid(row=1, column=1)
         
-        total_overspent_label = customtkinter.CTkLabel(self, text="Total Overspent")
-        total_overspent_label.grid(row=0, column=2, padx=2, pady=2)
+        self.total_overspent_label = customtkinter.CTkLabel(self, text="Total Overspent")
+        self.total_overspent_label.grid(row=0, column=2, padx=2, pady=2)
+        self._overspent_frame = customtkinter.CTkFrame(self, height=200, width=300)
+        self._overspent_frame.grid(row=1, column=2)
+        
         
         
 
