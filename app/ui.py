@@ -15,10 +15,9 @@ class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
         super().__init__(master)
         
-        #self.icon_font = customtkinter.CTkFont(family="Font Awesome 7 Free Solid", size=20)
-        #self.icon_image = customtkinter.CTkImage(Image=(f"{PNG_PATH}/pen-to-square.png"), size=(20,20))
         
-        self.add_transaction_btn = customtkinter.CTkButton(self, text=" Add Transaction", image=self.icon_image, compound="left", command=open_transaction_window)
+        self.add_transaction_icon = customtkinter.CTkImage(light_image=Image.open((f"{PNG_PATH}/pen-to-square.png")), size=(20,20))
+        self.add_transaction_btn = customtkinter.CTkButton(self, text=" Add Transaction", image=self.add_transaction_icon, compound="left", command=open_transaction_window)
         self.add_transaction_btn.grid(row=1, column=0, padx=10, pady=10)
         
         self.view_transaction_btn  = customtkinter.CTkButton(self, text="View Transactions")
@@ -119,7 +118,8 @@ class TransactionWindow(customtkinter.CTkToplevel):
         self.amount = customtkinter.CTkEntry(self, placeholder_text="Amount")
         self.amount.pack(pady=10)
         
-        self.save_button = customtkinter.CTkButton(self, text="Save Transaction", command=self.handle_save)
+        self.save_button_icon = customtkinter.CTkImage(light_image=Image.open((f"{PNG_PATH}/save.png")), size=(20,20))
+        self.save_button = customtkinter.CTkButton(self, text="Save Transaction", image=self.save_button_icon, compound="left", command=self.handle_save)
         self.save_button.pack(pady=20)
         
     def handle_save(self):
