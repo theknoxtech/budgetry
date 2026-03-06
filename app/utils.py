@@ -14,7 +14,7 @@ import re
 
 
 def validate_input(input):
-    match_regex = r"\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\b"
+    match_regex = r"\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b"
     
     if re.findall(match_regex, input):
         return True
