@@ -3,7 +3,7 @@ from models import Budget, Transaction, Category, Payee
 from database import get_categories, add_transaction
 from datetime import datetime
 from utils import validate_input
-from ui import Sidebar, Toolbar, Overview, TransactionWindow
+from ui import SideBar, ToolBar, OverviewFrame, TransactionWindow
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -15,17 +15,20 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
         
-        # Overview
-        self.overview = Overview(master=self)
-        self.overview.grid(row=1, column=1, sticky="nsew")
-        
-        # Sidebar
-        self.sidebar = Sidebar(master=self, open_transaction_window=self.open_transaction_window)
-        self.sidebar.grid(row=1,column=0,sticky="nsw")
         
         # Toolbar
-        self.toolbar = Toolbar(master=self)
-        self.toolbar.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.toolbar = ToolBar(master=self)
+        self.toolbar.grid(row=0, column=1, sticky="ne")
+        
+        # Sidebar
+        self.sidebar = SideBar(master=self, open_transaction_window=self.open_transaction_window)
+        self.sidebar.grid(row=1,column=0,sticky="nsw")
+        
+        # Overview
+        self.overview = OverviewFrame(master=self)
+        self.overview.grid(row=1, column=1, sticky="nsew")
+        
+        
         
         #self.budget = Budget(name="Main Budget")
         

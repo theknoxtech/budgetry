@@ -3,22 +3,22 @@ from utils import validate_input
 from database import get_transaction, get_categories, get_payees
 from models import Transaction, Category, Payee
 from datetime import datetime
+from pathlib import Path
+from PIL import Image
+
+BASE_DIR = Path(__file__).resolve().parent.parent 
+FONT_PATH = BASE_DIR / "assets" / "fonts" / "otf" / "Font Awesome 7 Solid-900.otf"
+PNG_PATH = BASE_DIR / "assets" / "fonts" / "icons" / "pngs"
 
 
-class Sidebar(customtkinter.CTkFrame):
+class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
         super().__init__(master)
         
-        #self.grid_columnconfigure(0, weight=0)
-        #self.grid_rowconfigure(1, weight=0)
-        #self.grid_rowconfigure(2, weight=0)
-        #self.grid_rowconfigure(3, weight=0)
-        #self.grid_rowconfigure(4, weight=0)
-        #self.grid_rowconfigure(5, weight=0)
-        #self.grid_rowconfigure(6, weight=0)
+        #self.icon_font = customtkinter.CTkFont(family="Font Awesome 7 Free Solid", size=20)
+        #self.icon_image = customtkinter.CTkImage(Image=(f"{PNG_PATH}/pen-to-square.png"), size=(20,20))
         
-        
-        self.add_transaction_btn = customtkinter.CTkButton(self, text="Add Transaction", command=open_transaction_window)
+        self.add_transaction_btn = customtkinter.CTkButton(self, text=" Add Transaction", image=self.icon_image, compound="left", command=open_transaction_window)
         self.add_transaction_btn.grid(row=1, column=0, padx=10, pady=10)
         
         self.view_transaction_btn  = customtkinter.CTkButton(self, text="View Transactions")
@@ -27,29 +27,31 @@ class Sidebar(customtkinter.CTkFrame):
         self.category_btn = customtkinter.CTkButton(self, text="Categories")
         self.category_btn.grid(row=3, column=0, padx=10, pady=10)
 
-class Toolbar(customtkinter.CTkFrame):
+class ToolBar(customtkinter.CTkFrame):
     def __init__(self,master):
         super().__init__(master)
         
-        #self.grid_rowconfigure(0, weight=1)
-        #self.grid_columnconfigure(0, weight=1)
-        #self.grid_columnconfigure(1, weight=1)
-        #self.grid_columnconfigure(2, weight=1)
-        #self.grid_columnconfigure(3, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=0)
+        self.grid_columnconfigure(4, weight=0)
         
-        placeholder_btn_1 = customtkinter.CTkButton(self, text="Placeholder")
-        placeholder_btn_1.grid(row=0, column=0, padx=10, pady=10)
+        summary_btn = customtkinter.CTkButton(self, text="Summary")
+        summary_btn.grid(row=0, column=1, padx=10, pady=10, sticky="e")
         
-        placeholder_btn_2 = customtkinter.CTkButton(self, text="Placeholder")
-        placeholder_btn_2.grid(row=0, column=1, padx=10, pady=10)
+        placeholder_btn_2 = customtkinter.CTkButton(self, text="Placeholder2")
+        placeholder_btn_2.grid(row=0, column=2, padx=10, pady=10, sticky="e")
         
-        placeholder_btn_3 = customtkinter.CTkButton(self, text="Placeholder")
-        placeholder_btn_3.grid(row=0, column=2, padx=10, pady=10)
+        placeholder_btn_3 = customtkinter.CTkButton(self, text="Placeholder3")
+        placeholder_btn_3.grid(row=0, column=3, padx=10, pady=10, sticky="e")
         
-        placeholder_btn_4 = customtkinter.CTkButton(self, text="Placeholder")
-        placeholder_btn_4.grid(row=0, column=3, padx=10, pady=10)
-        
-class Overview(customtkinter.CTkFrame):
+        placeholder_btn_4 = customtkinter.CTkButton(self, text="Placeholder4")
+        placeholder_btn_4.grid(row=0, column=4, padx=10, pady=10, sticky="e")
+
+
+class OverviewFrame(customtkinter.CTkFrame):
     def __init__(self,master):
         super().__init__(master)
         
