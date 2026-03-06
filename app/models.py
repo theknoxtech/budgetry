@@ -1,22 +1,23 @@
 from dataclasses import dataclass, field
+import uuid
 
 
 @dataclass
 class Transaction:
-    id: str
     date: str
     payee: str
     amount: float
     memo: str
     category_id: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass
 class Category:
-    id: str
     name: str
     budgeted: float
     activity: float 
     available: float
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass
 class Payee:
