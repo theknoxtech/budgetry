@@ -53,11 +53,26 @@ class MainView(customtkinter.CTkFrame):
     def __init__(self,master):
         super().__init__(master)
         
-        #self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=0)
+        
         #self.grid_rowconfigure(1, weight=1)
         
-        mainView_btn_1 = customtkinter.CTkButton(self, text="Main View Placeholder")
-        mainView_btn_1.grid(padx=10, pady=10)
+        self.amount_spent_label = customtkinter.CTkLabel(self, text="Amount Spent")
+        self.amount_spent_label.grid(row=0, column=0)
+        self.amount_spent_frame = customtkinter.CTkFrame(self, bg_color="yellow")
+        self.amount_spent_frame.grid(row=1, column=0)
+        
+        total_income_label = customtkinter.CTkLabel(self, text="Total Monthly Income")
+        total_income_label.grid(row=0, column=1, padx=2, pady=2)
+        
+        total_overspent_label = customtkinter.CTkLabel(self, text="Total Overspent")
+        total_overspent_label.grid(row=0, column=2, padx=2, pady=2)
+        
+        
 
 class TransactionWindow(customtkinter.CTkToplevel):
     def __init__(self, master, on_save_callback, category_map):
