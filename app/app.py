@@ -18,7 +18,7 @@ class App(customtkinter.CTk):
         
         # Toolbar
         self.toolbar = ToolBar(master=self)
-        self.toolbar.grid(row=0, column=1, sticky="ne")
+        self.toolbar.grid(row=0, column=1, sticky="ew")
         
         # Sidebar
         self.sidebar = SideBar(master=self, open_transaction_window=self.open_transaction_window)

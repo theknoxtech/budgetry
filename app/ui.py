@@ -11,7 +11,7 @@ FONT_PATH = BASE_DIR / "assets" / "fonts" / "otf" / "Font Awesome 7 Solid-900.ot
 PNG_PATH = BASE_DIR / "assets" / "fonts" / "icons" / "pngs"
 
 # Background: Ghost White / Space Cadet (Deep Navy)
-DEFAULT_BG = ("#F8F9FA", "#2745A0")
+SIDEBAR_BG = ("#F8F9FA", "#2745A0")
 # Sidebar Border: Platinum / Yankee Blue
 SIDEBAR_BORDER = ("#DEE2E6", "#2E32B1")
 # Button Hover: Light Gray / Navy Blue highlight
@@ -78,12 +78,14 @@ class SideBar(customtkinter.CTkFrame):
 
             btn = customtkinter.CTkButton(
                 self, 
-                text="", # Start collapsed (empty string)
+                text="",
                 image=icon_img, 
                 compound="left", 
                 anchor="w",
                 width=40,
-                fg_color="transparent", # Optional: makes it look like a list
+                fg_color="transparent",
+                border_color=ACCENT_BLUE,
+                border_width=1,
                 text_color=TEXT_COLOR,
                 hover_color=BTN_HOVER,
                 command=item["cmd"]
