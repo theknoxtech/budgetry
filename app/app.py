@@ -8,7 +8,7 @@ from ui import SideBar, ToolBar, OverviewFrame, TransactionWindow
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("800x600")
+        self.geometry("1100x700")
         self.title("Budgetry")
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
@@ -22,7 +22,7 @@ class App(customtkinter.CTk):
         
         # Sidebar
         self.sidebar = SideBar(master=self, open_transaction_window=self.open_transaction_window)
-        self.sidebar.grid(row=1,column=0,sticky="nsw")
+        self.sidebar.grid(row=0,column=0,rowspan=2, sticky="nsew")
         
         # Overview
         self.overview = OverviewFrame(master=self)

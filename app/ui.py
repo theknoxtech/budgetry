@@ -10,11 +10,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 FONT_PATH = BASE_DIR / "assets" / "fonts" / "otf" / "Font Awesome 7 Solid-900.otf"
 PNG_PATH = BASE_DIR / "assets" / "fonts" / "icons" / "pngs"
 
+# Background: Ghost White / Space Cadet (Deep Navy)
+DEFAULT_BG = ("#F8F9FA", "#2745A0")
+# Sidebar Border: Platinum / Yankee Blue
+SIDEBAR_BORDER = ("#DEE2E6", "#2E32B1")
+# Button Hover: Light Gray / Navy Blue highlight
+BTN_HOVER = ("#E9ECEF", "#4247CE")
+# Text Color: Charcoal / Cloud Gray
+TEXT_COLOR = ("#212529", "#F8F9FA")
+# Accent Color: Vibrant Blue for active buttons/actions
+ACCENT_BLUE = ("#3A86FF", "#3A86FF")
+
 
 class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
         # 1. Initialize with fixed width and no rounded corners for the edge
-        super().__init__(master, width=60, corner_radius=0)
+        super().__init__(master, width=60, corner_radius=0, bg_color=SIDEBAR_BG, border_width=2, border_color=SIDEBAR_BORDER)
         self.grid_propagate(False) # Prevents frame from shrinking
         self.expand_sidebar = False
         
@@ -45,8 +56,8 @@ class SideBar(customtkinter.CTkFrame):
             image=self.menu_open_icon,
             width=40,
             height=40,
-            fg_color="transparent", 
-            hover_color=("gray80", "gray25"),
+            fg_color="transparent",
+            hover_color=BTN_HOVER,
             command=self.toggle_sidebar
         )
         self.menu_btn.grid(row=0, column=0, padx=10, pady=(20, 10))
@@ -73,7 +84,8 @@ class SideBar(customtkinter.CTkFrame):
                 anchor="w",
                 width=40,
                 fg_color="transparent", # Optional: makes it look like a list
-                text_color=("black", "white"),
+                text_color=TEXT_COLOR,
+                hover_color=BTN_HOVER,
                 command=item["cmd"]
             )
             btn.grid(row=i + 1, column=0, padx=10, pady=5, sticky="ew")
