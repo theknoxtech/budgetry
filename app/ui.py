@@ -13,7 +13,17 @@ PNG_PATH = BASE_DIR / "assets" / "fonts" / "icons" / "pngs"
 
 class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
-        super().__init__(master)
+        super().__init__(master, width=60, corner_radius=0)
+        self.grid_propagate(False)
+        self.expand_sidebar = False
+        
+        self.sidebar_items = [
+            {"icon":"menu", "label":"Show Menu", "cmd":""},
+            {"icon":"menuclose", "label":"Close Menu", "cmd":""},
+            {"icon":"plus", "label":"Add Transaction", "cmd": open_transaction_window}
+        ]
+        
+        
         
         
         self.add_transaction_icon = customtkinter.CTkImage(light_image=Image.open((f"{PNG_PATH}/pen-to-square.png")), size=(20,20))
