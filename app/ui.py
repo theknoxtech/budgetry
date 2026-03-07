@@ -13,28 +13,91 @@ PNG_PATH = BASE_DIR / "assets" / "fonts" / "icons" / "pngs"
 
 class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
+        # 1. Initialize with fixed width and no rounded corners for the edge
         super().__init__(master, width=60, corner_radius=0)
-        self.grid_propagate(False)
+        self.grid_propagate(False) # Prevents frame from shrinking
         self.expand_sidebar = False
         
-        self.sidebar_items = [
-            {"icon":"menu", "label":"Show Menu", "cmd":""},
-            {"icon":"menuclose", "label":"Close Menu", "cmd":""},
-            {"icon":"plus", "label":"Add Transaction", "cmd": open_transaction_window}
+        # 2. Define Sidebar Items (Data-driven approach)
+        self.menu_items = [
+            {"icon": "plus", "label": "Add Transaction", "cmd": open_transaction_window},
+            {"icon": "list", "label": "View Transactions", "cmd": lambda: print("View clicked")},
+            {"icon": "tags", "label": "Categories", "cmd": lambda: print("Categories clicked")},
         ]
+        self.nav_buttons = [] # Store button objects to update them during toggle
+        
+        # 3. Load Menu Toggle Icons (Smart Light/Dark objects)
+        self.menu_open_icon = customtkinter.CTkImage(
+            light_image=Image.open(PNG_PATH / "menu_open_light.png"),
+            dark_image=Image.open(PNG_PATH / "menu_open_dark.png"),
+            size=(24, 24)
+        )
+        self.menu_close_icon = customtkinter.CTkImage(
+            light_image=Image.open(PNG_PATH / "menu_close_light.png"),
+            dark_image=Image.open(PNG_PATH / "menu_close_dark.png"),
+            size=(24, 24)
+        )
+        
+        # 4. The Hamburger/Toggle Button
+        self.menu_btn = customtkinter.CTkButton(
+            self,
+            text="",
+            image=self.menu_open_icon,
+            width=40,
+            height=40,
+            fg_color="transparent", 
+            hover_color=("gray80", "gray25"),
+            command=self.toggle_sidebar
+        )
+        self.menu_btn.grid(row=0, column=0, padx=10, pady=(20, 10))
+        
+        # 5. Build Navigation Buttons via Loop
+        for i, item in enumerate(self.menu_items):
+            # Attempt to load light/dark versions of icons
+            # Note: Ensure you have 'plus_light.png' and 'plus_dark.png' etc.
+            try:
+                icon_img = customtkinter.CTkImage(
+                    light_image=Image.open(PNG_PATH / f"{item['icon']}_light.png"),
+                    dark_image=Image.open(PNG_PATH / f"{item['icon']}_dark.png"),
+                    size=(20, 20)
+                )
+            except Exception:
+                # Fallback if specific light/dark files don't exist yet
+                icon_img = None 
+
+            btn = customtkinter.CTkButton(
+                self, 
+                text="", # Start collapsed (empty string)
+                image=icon_img, 
+                compound="left", 
+                anchor="w",
+                width=40,
+                fg_color="transparent", # Optional: makes it look like a list
+                text_color=("black", "white"),
+                command=item["cmd"]
+            )
+            btn.grid(row=i + 1, column=0, padx=10, pady=5, sticky="ew")
+            self.nav_buttons.append(btn)
+        
+    def toggle_sidebar(self):
+        self.expand_sidebar = not self.expand_sidebar
+        
+        # Update Sidebar Width
+        set_width = 200 if self.expand_sidebar else 60
+        self.configure(width=set_width)
+
+        # Update Toggle Icon (Hamburger vs X)
+        set_icon = self.menu_close_icon if self.expand_sidebar else self.menu_open_icon
+        self.menu_btn.configure(image=set_icon)
+        
+        # Update all Nav Buttons
+        for i, btn in enumerate(self.nav_buttons):
+            # Add a space before the label for padding next to the icon
+            new_text = f"  {self.menu_items[i]['label']}" if self.expand_sidebar else ""
+            btn.configure(text=new_text)
+
         
         
-        
-        
-        self.add_transaction_icon = customtkinter.CTkImage(light_image=Image.open((f"{PNG_PATH}/pen-to-square.png")), size=(20,20))
-        self.add_transaction_btn = customtkinter.CTkButton(self, text=" Add Transaction", image=self.add_transaction_icon, compound="left", command=open_transaction_window)
-        self.add_transaction_btn.grid(row=1, column=0, padx=10, pady=10)
-        
-        self.view_transaction_btn  = customtkinter.CTkButton(self, text="View Transactions")
-        self.view_transaction_btn.grid(row=2, column=0, padx=10, pady=10)
-        
-        self.category_btn = customtkinter.CTkButton(self, text="Categories")
-        self.category_btn.grid(row=3, column=0, padx=10, pady=10)
 
 class ToolBar(customtkinter.CTkFrame):
     def __init__(self,master):
