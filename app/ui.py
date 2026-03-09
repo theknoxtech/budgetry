@@ -24,32 +24,32 @@ ACCENT_BLUE = ("#3A86FF", "#3A86FF")
 
 class SideBar(customtkinter.CTkFrame):
     def __init__(self, master, open_transaction_window):
-        # 1. Initialize with fixed width and no rounded corners for the edge
         super().__init__(master, width=60, corner_radius=0, bg_color=SIDEBAR_BG, border_width=2, border_color=SIDEBAR_BORDER)
         self.grid_propagate(False) # Prevents frame from shrinking
         self.expand_sidebar = False
         
-        # 2. Define Sidebar Items (Data-driven approach)
+        # Sidebar button definitions
         self.menu_items = [
             {"icon": "plus", "label": "Add Transaction", "cmd": open_transaction_window},
             {"icon": "list", "label": "View Transactions", "cmd": lambda: print("View clicked")},
             {"icon": "tags", "label": "Categories", "cmd": lambda: print("Categories clicked")},
         ]
-        self.nav_buttons = [] # Store button objects to update them during toggle
+        self.nav_buttons = []
         
-        # 3. Load Menu Toggle Icons (Smart Light/Dark objects)
+        # Menu open icons
         self.menu_open_icon = customtkinter.CTkImage(
             light_image=Image.open(PNG_PATH / "menu_open_light.png"),
             dark_image=Image.open(PNG_PATH / "menu_open_dark.png"),
             size=(24, 24)
         )
+        # Menu close icons
         self.menu_close_icon = customtkinter.CTkImage(
             light_image=Image.open(PNG_PATH / "menu_close_light.png"),
             dark_image=Image.open(PNG_PATH / "menu_close_dark.png"),
             size=(24, 24)
         )
         
-        # 4. The Hamburger/Toggle Button
+        # Hamburger menu button
         self.menu_btn = customtkinter.CTkButton(
             self,
             text="",
@@ -62,10 +62,8 @@ class SideBar(customtkinter.CTkFrame):
         )
         self.menu_btn.grid(row=0, column=0, padx=10, pady=(20, 10))
         
-        # 5. Build Navigation Buttons via Loop
+        #Build Navigation Buttons via Loop
         for i, item in enumerate(self.menu_items):
-            # Attempt to load light/dark versions of icons
-            # Note: Ensure you have 'plus_light.png' and 'plus_dark.png' etc.
             try:
                 icon_img = customtkinter.CTkImage(
                     light_image=Image.open(PNG_PATH / f"{item['icon']}_light.png"),
@@ -73,7 +71,7 @@ class SideBar(customtkinter.CTkFrame):
                     size=(20, 20)
                 )
             except Exception:
-                # Fallback if specific light/dark files don't exist yet
+                
                 icon_img = None 
 
             btn = customtkinter.CTkButton(
@@ -96,22 +94,15 @@ class SideBar(customtkinter.CTkFrame):
     def toggle_sidebar(self):
         self.expand_sidebar = not self.expand_sidebar
         
-        # Update Sidebar Width
         set_width = 200 if self.expand_sidebar else 60
         self.configure(width=set_width)
 
-        # Update Toggle Icon (Hamburger vs X)
         set_icon = self.menu_close_icon if self.expand_sidebar else self.menu_open_icon
         self.menu_btn.configure(image=set_icon)
         
-        # Update all Nav Buttons
         for i, btn in enumerate(self.nav_buttons):
-            # Add a space before the label for padding next to the icon
             new_text = f"  {self.menu_items[i]['label']}" if self.expand_sidebar else ""
             btn.configure(text=new_text)
-
-        
-        
 
 class ToolBar(customtkinter.CTkFrame):
     def __init__(self,master):
@@ -135,7 +126,6 @@ class ToolBar(customtkinter.CTkFrame):
         
         placeholder_btn_4 = customtkinter.CTkButton(self, text="Placeholder4")
         placeholder_btn_4.grid(row=0, column=4, padx=10, pady=10, sticky="e")
-
 
 class OverviewFrame(customtkinter.CTkFrame):
     def __init__(self,master):
@@ -169,9 +159,6 @@ class OverviewFrame(customtkinter.CTkFrame):
         self._overspent_frame = customtkinter.CTkFrame(self, height=200, width=300)
         self._overspent_frame.grid(row=1, column=2)
         
-        
-        
-
 class TransactionWindow(customtkinter.CTkToplevel):
     def __init__(self, master, on_save_callback, category_map):
         super().__init__(master)
@@ -232,5 +219,8 @@ class TransactionWindow(customtkinter.CTkToplevel):
             self.destroy()
         except ValueError:
             print("There was a problem with the amount conversion")
-            
+
+class TransactionView(customtkinter.CTkScrollableFrame):
+    def __init__(self, master):
+        super().__init__(master)
         

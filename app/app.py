@@ -15,6 +15,26 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
         
+    def clear_overview(self, new_view):
+        self.current_view =  None
+        
+        if self.current_view is not None:
+            self.current_view.destroy()
+        
+        self.current_view = new_view(self)
+        self.current_view.grid(row=1, column=1, sticky="nsew")
+        
+        
+    def open_transaction_window(self):
+        categories = get_categories()
+        category_map = {category.name: category.id for category in categories}
+        self.transaction_window = TransactionWindow(self, self.handle_save_success, category_map)
+        
+    
+    def handle_save_success(self, transaction):
+        add_transaction(transaction)
+        # TODO this needs to be a notifcation
+        print("Transaction has been saved!")
         
         # Toolbar
         self.toolbar = ToolBar(master=self)
@@ -31,17 +51,6 @@ class App(customtkinter.CTk):
         
         
         #self.budget = Budget(name="Main Budget")
-        
-    def open_transaction_window(self):
-        categories = get_categories()
-        category_map = {category.name: category.id for category in categories}
-        self.transaction_window = TransactionWindow(self, self.handle_save_success, category_map)
-        
-    
-    def handle_save_success(self, transaction):
-        add_transaction(transaction)
-        # TODO this needs to be a notifcation
-        print("Transaction has been saved!")
 
 
 
