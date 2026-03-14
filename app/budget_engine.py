@@ -1,5 +1,5 @@
 from collections import defaultdict
-from models import Transaction, Category, Budget
+from app.models import Transaction, Category, Budget
 
 
 '''
@@ -50,9 +50,9 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
     '''
     
     return {
-        "income_total ":income_total,
-        "available ": available,
-        "activity: ": activity,
-        "to_be_budgeted ": to_be_budgeted,
-        "overspent_categories ": overspent_categories
-        }
+        "income_total": income_total,
+        "available": available,
+        "activity": activity,
+        "to_be_budgeted": to_be_budgeted,
+        "overspent_categories": overspent_categories
+    }

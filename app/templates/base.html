@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budgetry{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong>Budgetry</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{{ url_for('main.budget') }}" {% if request.endpoint == 'main.budget' %}class="active"{% endif %}>Budget</a></li>
+            <li><a href="{{ url_for('main.transactions') }}" {% if request.endpoint == 'main.transactions' %}class="active"{% endif %}>Transactions</a></li>
+            <li><a href="{{ url_for('main.categories') }}" {% if request.endpoint == 'main.categories' %}class="active"{% endif %}>Categories</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <article class="flash flash-{{ category }}">{{ message }}</article>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
