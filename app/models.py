@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import uuid
 
 
 @dataclass
@@ -11,22 +12,20 @@ class Account:
 
 @dataclass
 class Transaction:
-    id: str
     date: str
     payee: str
     amount: float
     memo: str
     category_id: str
-    account_id: str = ""
-    plaid_transaction_id: str = ""
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass
 class Category:
-    id: str
     name: str
     budgeted: float
     activity: float 
     available: float
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 @dataclass
 class Payee:
@@ -63,3 +62,4 @@ class Budget:
     def remove_payee(self, payee):
         if payee in self.payee:
             self.payee.remove(payee)
+

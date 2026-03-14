@@ -119,16 +119,37 @@ def get_transaction_by_plaid_id(plaid_transaction_id):
     connection.close()
     return row is not None
 
-
-def delete_transaction_by_plaid_id(plaid_transaction_id):
-    connection = get_connection()
+# TODO: Implement delete_transaction(transaction_id)
+def delete_transaction(transaction_id):
+    connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM transactions WHERE plaid_transaction_id = ?", (plaid_transaction_id,))
+    query = """
+        DELETE FROM transactions WHERE id = ?
+    """
+    cursor.execute(query, (transaction_id) )
     connection.commit()
     connection.close()
 
-
-# --- Categories ---
+def update_transaction(transaction):
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    query = """
+        UPDATE transactions 
+        SET date = ?, payee = ?, amount = ?, memo = ?, category_id = ? 
+        WHERE id = ?
+    """
+    values = (
+        transaction.date, 
+        transaction.payee, 
+        transaction.amount, 
+        transaction.memo, 
+        transaction.category_id, 
+        transaction.id
+    )
+    
+    cursor.execute(query, values)
+    connection.commit()
+    connection.close()
 
 def add_category(category):
     connection = get_connection()
@@ -140,45 +161,25 @@ def add_category(category):
     connection.commit()
     connection.close()
 
+# TODO: Implement delete_category(category_id)
+# TODO: Implement update_category(category_id, updated_category_obj)
 
-def get_categories():
-    connection = get_connection()
+def get_categories(names_only=False, select_category=False):
+    connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
+    
+    if names_only:
+        cursor.execute("SELECT name FROM categories")
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+
     cursor.execute("SELECT * FROM categories")
     rows = cursor.fetchall()
     connection.close()
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4]) for row in rows]
 
 
-def delete_category(category_id):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM categories WHERE id = ?", (category_id,))
-    connection.commit()
-    connection.close()
-
-
-def update_category_budget(category_id, budgeted_amount):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("UPDATE categories SET budgeted = ? WHERE id = ?", (budgeted_amount, category_id))
-    connection.commit()
-    connection.close()
-
-
-# --- Payees ---
-
-def add_payee(payee):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        "INSERT INTO payees VALUES(?,?)",
-        (payee.id, payee.name)
-    )
-    connection.commit()
-    connection.close()
-
-
+# TODO: Implement add_payee(payee)
 def get_payees():
     connection = get_connection()
     cursor = connection.cursor()
@@ -208,29 +209,4 @@ def add_plaid_item(plaid_item_id, account_id, access_token, item_id, institution
     connection.commit()
     connection.close()
 
-
-def get_plaid_item_by_account(account_id):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT id, account_id, access_token, item_id, institution_name, cursor, last_synced FROM plaid_items WHERE account_id = ?", (account_id,))
-    row = cursor.fetchone()
-    connection.close()
-    if row:
-        return {"id": row[0], "account_id": row[1], "access_token": row[2], "item_id": row[3], "institution_name": row[4], "cursor": row[5], "last_synced": row[6]}
-    return None
-
-
-def update_plaid_cursor(plaid_item_id, new_cursor, last_synced):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("UPDATE plaid_items SET cursor = ?, last_synced = ? WHERE id = ?", (new_cursor, last_synced, plaid_item_id))
-    connection.commit()
-    connection.close()
-
-
-def delete_plaid_item(plaid_item_id):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM plaid_items WHERE id = ?", (plaid_item_id,))
-    connection.commit()
-    connection.close()
+# TODO: Implement update_payee(payee_id, updated_payee_obj)
