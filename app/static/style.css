@@ -85,3 +85,10 @@ nav a.active {
     background-color: #c62828;
     border-color: #c62828;
 }
+
+/* Uncategorized transaction indicator */
+.uncategorized {
+    color: #e65100;
+    font-style: italic;
+    font-size: 0.85rem;
+}

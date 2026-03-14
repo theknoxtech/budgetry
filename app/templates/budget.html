@@ -4,6 +4,19 @@
 {% block content %}
 <h2>Budget</h2>
 
+{% if accounts %}
+<div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+    {% for acct in accounts %}
+    <div style="padding: 0.5rem 1rem; background: #f5f5f5; border-radius: 8px; flex: 1; min-width: 150px;">
+        <small style="color: #757575;">{{ acct.name }}</small>
+        <div class="{{ 'amount-positive' if acct.balance >= 0 else 'amount-negative' }}" style="font-size: 1.1rem;">
+            ${{ "%.2f"|format(acct.balance) }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 {% set tbb = result.get('to_be_budgeted', 0) %}
 <div class="{{ 'tbb-positive' if tbb >= 0 else 'tbb-negative' }}">
     <h3 style="margin: 0;">To Be Budgeted: ${{ "%.2f"|format(tbb) }}</h3>

@@ -11,6 +11,7 @@
     <thead>
         <tr>
             <th>Date</th>
+            <th>Account</th>
             <th>Payee</th>
             <th>Category</th>
             <th>Amount</th>
@@ -22,8 +23,15 @@
         {% for txn in transactions %}
         <tr>
             <td>{{ txn.date }}</td>
+            <td>{{ account_map.get(txn.account_id, '') }}</td>
             <td>{{ txn.payee }}</td>
-            <td>{{ category_map.get(txn.category_id, txn.category_id) }}</td>
+            <td>
+                {% if txn.category_id and txn.category_id in category_map %}
+                    {{ category_map[txn.category_id] }}
+                {% else %}
+                    <span class="uncategorized">Uncategorized</span>
+                {% endif %}
+            </td>
             <td class="{{ 'amount-positive' if txn.amount >= 0 else 'amount-negative' }}">${{ "%.2f"|format(txn.amount) }}</td>
             <td>{{ txn.memo }}</td>
             <td>

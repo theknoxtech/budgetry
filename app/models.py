@@ -2,6 +2,14 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class Account:
+    id: str
+    name: str
+    account_type: str
+    institution: str
+    balance: float
+
+@dataclass
 class Transaction:
     id: str
     date: str
@@ -9,6 +17,8 @@ class Transaction:
     amount: float
     memo: str
     category_id: str
+    account_id: str = ""
+    plaid_transaction_id: str = ""
 
 @dataclass
 class Category:
