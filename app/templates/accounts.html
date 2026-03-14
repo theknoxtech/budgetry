@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %} - Accounts{% endblock %}
+
+{% block content %}
+<h2>Accounts</h2>
+
+<form method="POST" action="{{ url_for('main.add_account') }}" style="display: flex; gap: 0.5rem; align-items: end; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <input type="text" name="name" placeholder="Account name" required style="margin: 0;">
+    <select name="account_type" required style="margin: 0;">
+        <option value="" disabled selected>Type</option>
+        <option value="checking">Checking</option>
+        <option value="savings">Savings</option>
+    </select>
+    <input type="text" name="institution" placeholder="Bank name" required style="margin: 0;">
+    <button type="submit">Add Account</button>
+</form>
+
+{% if accounts %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Institution</th>
+            <th>Balance</th>
+            <th>Bank Sync</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for acct in accounts %}
+        <tr>
+            <td>{{ acct.name }}</td>
+            <td>{{ acct.account_type | capitalize }}</td>
+            <td>{{ acct.institution }}</td>
+            <td class="{{ 'amount-positive' if acct.balance >= 0 else 'amount-negative' }}">${{ "%.2f"|format(acct.balance) }}</td>
+            <td>
+                {% if plaid_status.get(acct.id) %}
+                    <form method="POST" action="{{ url_for('main.plaid_sync', account_id=acct.id) }}" style="margin: 0; display: inline;">
+                        <button type="submit" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Sync</button>
+                    </form>
+                    {% if plaid_status[acct.id].last_synced %}
+                    <small style="display: block; color: #757575; margin-top: 0.25rem;">Last: {{ plaid_status[acct.id].last_synced[:16] }}</small>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('main.plaid_connect', account_id=acct.id) }}" style="font-size: 0.85rem;">Connect Bank</a>
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('main.delete_account', account_id=acct.id) }}" style="margin: 0;">
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No accounts yet. Add one above to get started.</p>
+{% endif %}
+{% endblock %}

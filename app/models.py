@@ -3,6 +3,14 @@ import uuid
 
 
 @dataclass
+class Account:
+    id: str
+    name: str
+    account_type: str
+    institution: str
+    balance: float
+
+@dataclass
 class Transaction:
     date: str
     payee: str
