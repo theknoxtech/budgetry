@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %} - Categories{% endblock %}
+
+{% block content %}
+<h2>Categories</h2>
+
+<form method="POST" action="{{ url_for('main.add_category') }}" style="display: flex; gap: 0.5rem; align-items: end; margin-bottom: 1.5rem;">
+    <input type="text" name="name" placeholder="New category name" required style="margin: 0;">
+    <button type="submit">Add Category</button>
+</form>
+
+{% if categories %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Budgeted</th>
+            <th>Activity</th>
+            <th>Available</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cat in categories %}
+        <tr>
+            <td>{{ cat.name }}</td>
+            <td>${{ "%.2f"|format(cat.budgeted) }}</td>
+            <td>${{ "%.2f"|format(cat.activity) }}</td>
+            <td>${{ "%.2f"|format(cat.available) }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('main.delete_category', category_id=cat.id) }}" style="margin: 0;">
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No categories yet. Add one above to get started.</p>
+{% endif %}
+{% endblock %}

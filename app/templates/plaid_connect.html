@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %} - Connect Bank{% endblock %}
+
+{% block content %}
+<h2>Connect {{ account.name }} to your bank</h2>
+<p>Click the button below to securely connect your {{ account.institution }} account through Plaid.</p>
+
+<button id="connect-btn">Connect with Plaid</button>
+<a href="{{ url_for('main.accounts') }}" role="button" class="secondary" style="margin-left: 0.5rem;">Cancel</a>
+
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script>
+    document.getElementById('connect-btn').addEventListener('click', async function() {
+        this.disabled = true;
+        this.textContent = 'Connecting...';
+
+        const res = await fetch('/plaid/create_link_token', { method: 'POST' });
+        const data = await res.json();
+
+        const handler = Plaid.create({
+            token: data.link_token,
+            onSuccess: async function(publicToken, metadata) {
+                await fetch('/plaid/exchange_token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        public_token: publicToken,
+                        account_id: '{{ account.id }}'
+                    })
+                });
+                window.location.href = '/accounts';
+            },
+            onExit: function(err) {
+                document.getElementById('connect-btn').disabled = false;
+                document.getElementById('connect-btn').textContent = 'Connect with Plaid';
+            }
+        });
+        handler.open();
+    });
+</script>
+{% endblock %}
