@@ -3,31 +3,27 @@ from models import Budget, Transaction, Category, Payee
 from database import get_categories, add_transaction
 from datetime import datetime
 from utils import validate_input
-from ui import Sidebar, Toolbar, MainView, TransactionWindow
+from ui import SideBar, ToolBar, OverviewFrame, TransactionWindow
 
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("800x600")
+        self.geometry("1100x700")
         self.title("Budgetry")
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
         
-        # Sidebar
-        self.sidebar = Sidebar(master=self, open_transaction_window=self.open_transaction_window)
-        self.sidebar.grid(row=1,column=0,sticky="nsw")
+    def clear_overview(self, new_view):
+        self.current_view =  None
         
-        #Main View
-        self.mainview = MainView(master=self)
-        self.mainview.grid(row=1, column=1, sticky="nsew")
+        if self.current_view is not None:
+            self.current_view.destroy()
         
-        # Toolbar
-        self.toolbar = Toolbar(master=self)
-        self.toolbar.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.current_view = new_view(self)
+        self.current_view.grid(row=1, column=1, sticky="nsew")
         
-        #self.budget = Budget(name="Main Budget")
         
     def open_transaction_window(self):
         categories = get_categories()
@@ -39,6 +35,22 @@ class App(customtkinter.CTk):
         add_transaction(transaction)
         # TODO this needs to be a notifcation
         print("Transaction has been saved!")
+        
+        # Toolbar
+        self.toolbar = ToolBar(master=self)
+        self.toolbar.grid(row=0, column=1, sticky="ew")
+        
+        # Sidebar
+        self.sidebar = SideBar(master=self, open_transaction_window=self.open_transaction_window)
+        self.sidebar.grid(row=0,column=0,rowspan=2, sticky="nsew")
+        
+        # Overview
+        self.overview = OverviewFrame(master=self)
+        self.overview.grid(row=1, column=1, sticky="nsew")
+        
+        
+        
+        #self.budget = Budget(name="Main Budget")
 
 
 

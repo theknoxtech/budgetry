@@ -1,8 +1,19 @@
 from collections import defaultdict
 from app.models import Transaction, Category, Budget
 
+# TODO Add feature to get total spending by day, month, year
 
 
+def total_spending():
+    transactions = get_transaction()
+    amounts = [transaction.amount for transaction in transactions]
+    return sum(amounts)
+
+
+
+
+
+"""
 def run_budget_engine(previous_month_available, budgeted, transactions):
     activity = {}
     income_total = 0.0
@@ -42,6 +53,7 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         "to_be_budgeted ": to_be_budgeted,
         "overspent_categories ": overspent_categories
         }
+"""
 
 if __name__ == "__main__":
     # Example usage or testing
