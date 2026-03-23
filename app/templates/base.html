@@ -6,30 +6,95 @@
     <title>Budgetry{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        (function() {
+            var t = localStorage.getItem('budgetry-theme');
+            if (t) document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
 </head>
 <body>
     <nav class="container">
         <ul>
             <li><strong>Budgetry</strong></li>
         </ul>
+        {% if current_user %}
         <ul>
             <li><a href="{{ url_for('main.budget') }}" {% if request.endpoint == 'main.budget' %}class="active"{% endif %}>Budget</a></li>
-            <li><a href="{{ url_for('main.accounts') }}" {% if request.endpoint == 'main.accounts' %}class="active"{% endif %}>Accounts</a></li>
             <li><a href="{{ url_for('main.transactions') }}" {% if request.endpoint == 'main.transactions' %}class="active"{% endif %}>Transactions</a></li>
+            <li><a href="{{ url_for('main.payees') }}" {% if request.endpoint == 'main.payees' %}class="active"{% endif %}>Payees</a></li>
             <li><a href="{{ url_for('main.categories') }}" {% if request.endpoint == 'main.categories' %}class="active"{% endif %}>Categories</a></li>
+            <li><a href="{{ url_for('main.recurring_transactions') }}" {% if request.endpoint == 'main.recurring_transactions' %}class="active"{% endif %}>Recurring</a></li>
+            <li><a href="{{ url_for('main.reports') }}" {% if request.endpoint == 'main.reports' %}class="active"{% endif %}>Reports</a></li>
+            <li><a href="{{ url_for('main.settings') }}" {% if request.endpoint == 'main.settings' %}class="active"{% endif %}>Settings</a></li>
+            <li><button id="theme-toggle" class="nav-toggle" title="Toggle theme"></button></li>
+            {% if current_user.is_admin %}
+            <li><a href="{{ url_for('main.admin_users') }}" {% if request.endpoint == 'main.admin_users' %}class="active"{% endif %}>Admin</a></li>
+            {% endif %}
+            <li class="nav-user">
+                <a href="{{ url_for('main.profile') }}" class="nav-username" title="Your profile">{{ current_user.username }}</a>
+                <a href="{{ url_for('main.logout') }}" class="nav-toggle" title="Log out">Logout</a>
+            </li>
         </ul>
+        {% else %}
+        <ul>
+            <li><button id="theme-toggle" class="nav-toggle" title="Toggle theme"></button></li>
+        </ul>
+        {% endif %}
     </nav>
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <article class="flash flash-{{ category }}">{{ message }}</article>
-                {% endfor %}
+    <div class="{{ 'app-layout' if current_user else 'no-sidebar-layout' }}">
+        {% if current_user %}
+        <aside class="sidebar">
+            <!-- Budget Switcher -->
+            {% if user_budgets | length > 1 %}
+            <form method="POST" action="{{ url_for('main.switch_budget') }}" class="budget-switcher">
+                <select name="budget_id" onchange="this.form.submit()">
+                    {% for b in user_budgets %}
+                    <option value="{{ b.id }}" {{ 'selected' if active_budget and b.id == active_budget.id else '' }}>
+                        {{ b.name }}{% if b.is_shared %} (Shared){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% elif active_budget %}
+            <div class="sidebar-budget-name">{{ active_budget.name }}</div>
             {% endif %}
-        {% endwith %}
 
-        {% block content %}{% endblock %}
-    </main>
+            <h4>Accounts</h4>
+            {% set total = namespace(val=0) %}
+            {% for acct in sidebar_accounts %}
+            <div class="sidebar-account">
+                <span class="name">{{ acct.name }}</span>
+                <span class="balance {{ 'amount-positive' if acct.balance >= 0 else 'amount-negative' }}">${{ "%.2f"|format(acct.balance) }}</span>
+            </div>
+            {% set total.val = total.val + acct.balance %}
+            {% endfor %}
+            {% if sidebar_accounts %}
+            <div class="sidebar-total">
+                <span>Total</span>
+                <span class="{{ 'amount-positive' if total.val >= 0 else 'amount-negative' }}">${{ "%.2f"|format(total.val) }}</span>
+            </div>
+            {% endif %}
+            {% if not sidebar_accounts %}
+            <p class="text-muted" style="font-size: 0.85rem;">No accounts yet. Add one in <a href="{{ url_for('main.settings') }}">Settings</a>.</p>
+            {% endif %}
+        </aside>
+        {% endif %}
+
+        <main class="{{ 'content' if current_user else 'container' }}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <article class="flash flash-{{ category }}">{{ message }}</article>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

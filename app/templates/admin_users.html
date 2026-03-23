@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %} - Admin: Users{% endblock %}
+
+{% block content %}
+<h2>User Management</h2>
+
+{% if users %}
+<div class="table-container">
+<table class="sortable">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Member Since</th>
+            <th>MFA</th>
+            <th>Status</th>
+            <th>Admin</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr class="{{ '' if u.is_active else 'recurring-inactive' }}">
+            <td>{{ u.username }}</td>
+            <td>{{ u.email or '—' }}</td>
+            <td>{{ u.created_at[:10] }}</td>
+            <td>
+                {% if u.mfa_enabled %}
+                <span class="target-on-track">Enabled</span>
+                {% else %}
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Off</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if u.is_active %}
+                <span class="target-on-track">Active</span>
+                {% else %}
+                <span class="uncategorized">Inactive</span>
+                {% endif %}
+            </td>
+            <td>{{ "Yes" if u.is_admin else "No" }}</td>
+            <td class="actions-cell">
+                {% if u.id != current_user.id %}
+                <form method="POST" action="{{ url_for('main.toggle_user_active', user_id=u.id) }}">
+                    <button type="submit" class="{{ 'btn-delete' if u.is_active else 'btn-edit' }}">
+                        {{ 'Deactivate' if u.is_active else 'Activate' }}
+                    </button>
+                </form>
+                {% endif %}
+                {% if u.auth0_id %}
+                <form method="POST" action="{{ url_for('main.refresh_user_mfa', user_id=u.id) }}">
+                    <button type="submit" class="btn-small" style="font-size: 0.75rem;">Refresh MFA</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No users found.</p>
+</div>
+{% endif %}
+{% endblock %}

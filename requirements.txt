@@ -1,3 +1,5 @@
 flask
 plaid-python
 python-dotenv
+authlib
+requests

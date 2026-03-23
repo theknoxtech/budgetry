@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %} - Reports{% endblock %}
+
+{% block content %}
+<h2>Reports - {{ month_label }}</h2>
+
+<!-- Income vs Expenses Summary -->
+<div class="report-summary">
+    <div class="report-stat">
+        <small>Income</small>
+        <div class="amount-positive">${{ "%.2f"|format(income_total) }}</div>
+    </div>
+    <div class="report-stat">
+        <small>Expenses</small>
+        <div class="amount-negative">${{ "%.2f"|format(expense_total) }}</div>
+    </div>
+    <div class="report-stat">
+        <small>Net</small>
+        {% set net = income_total - expense_total %}
+        <div class="{{ 'amount-positive' if net >= 0 else 'amount-negative' }}">${{ "%.2f"|format(net) }}</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="report-charts">
+    <div class="card">
+        <h3>Spending by Category</h3>
+        {% if spending_by_cat %}
+        <canvas id="categoryChart" height="300"></canvas>
+        {% else %}
+        <div class="empty-state"><p>No expense data for this month.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Income vs Expenses (Last 6 Months)</h3>
+        <canvas id="monthlyChart" height="300"></canvas>
+    </div>
+</div>
+
+<!-- Spending Breakdown Table -->
+{% if spending_by_cat %}
+<div class="card">
+    <h3>Category Breakdown</h3>
+    <div class="table-container" style="box-shadow: none; border: none; margin: 0;">
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>% of Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat_name, amount in spending_by_cat.items() %}
+            <tr>
+                <td>{{ cat_name }}</td>
+                <td class="amount-negative">${{ "%.2f"|format(amount) }}</td>
+                <td>{{ "%.1f"|format(amount / expense_total * 100 if expense_total > 0 else 0) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var textColor = isDark ? '#f1f5f9' : '#1e293b';
+    var gridColor = isDark ? '#334155' : '#e2e8f0';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    // Category Doughnut Chart
+    {% if spending_by_cat %}
+    var catLabels = {{ spending_by_cat.keys()|list|tojson }};
+    var catData = {{ spending_by_cat.values()|list|tojson }};
+    var catColors = [
+        '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6',
+        '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4',
+        '#84cc16', '#e879f9', '#22d3ee', '#a3e635', '#fb923c'
+    ];
+
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catData,
+                backgroundColor: catColors.slice(0, catLabels.length),
+                borderWidth: 2,
+                borderColor: isDark ? '#1e293b' : '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'right', labels: { padding: 16, usePointStyle: true } }
+            }
+        }
+    });
+    {% endif %}
+
+    // Monthly Bar Chart
+    var monthLabels = {{ monthly_data.keys()|list|tojson }};
+    var incomeData = [{% for k, v in monthly_data.items() %}{{ v.income }}{{ ',' if not loop.last else '' }}{% endfor %}];
+    var expenseData = [{% for k, v in monthly_data.items() %}{{ v.expense }}{{ ',' if not loop.last else '' }}{% endfor %}];
+
+    new Chart(document.getElementById('monthlyChart'), {
+        type: 'bar',
+        data: {
+            labels: monthLabels,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    backgroundColor: isDark ? 'rgba(52, 211, 153, 0.7)' : 'rgba(16, 185, 129, 0.7)',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    backgroundColor: isDark ? 'rgba(248, 113, 113, 0.7)' : 'rgba(239, 68, 68, 0.7)',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, grid: { color: gridColor } },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { labels: { usePointStyle: true, padding: 16 } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

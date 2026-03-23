@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %} - Recurring Transactions{% endblock %}
+
+{% block content %}
+<h2>Recurring Transactions</h2>
+
+<div class="card">
+    <h3>Add Recurring Transaction</h3>
+    <form method="POST" action="{{ url_for('main.add_recurring') }}">
+        <div class="filter-grid">
+            <div>
+                <label for="payee">Payee</label>
+                <input type="text" id="payee" name="payee" placeholder="Payee name" required>
+            </div>
+            <div>
+                <label for="amount">Amount</label>
+                <input type="number" id="amount" name="amount" step="0.01" placeholder="0.00" required>
+            </div>
+            <div>
+                <label for="frequency">Frequency</label>
+                <select id="frequency" name="frequency" required>
+                    <option value="" disabled selected>Select</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Biweekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+            <div>
+                <label for="next_date">Next Date</label>
+                <input type="date" id="next_date" name="next_date" required>
+            </div>
+            <div>
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id">
+                    <option value="">None</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="account_id">Account</label>
+                <select id="account_id" name="account_id">
+                    <option value="">None</option>
+                    {% for acct in accounts %}
+                    <option value="{{ acct.id }}">{{ acct.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div>
+            <label for="memo">Memo</label>
+            <input type="text" id="memo" name="memo" placeholder="Optional memo">
+        </div>
+        <button type="submit" style="margin-top: 0.5rem;">Add Recurring</button>
+    </form>
+</div>
+
+{% if recurring %}
+<div class="table-container">
+<table class="sortable">
+    <thead>
+        <tr>
+            <th>Payee</th>
+            <th>Amount</th>
+            <th>Frequency</th>
+            <th>Next Date</th>
+            <th>Category</th>
+            <th>Account</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rt in recurring %}
+        <tr class="{{ '' if rt.is_active else 'recurring-inactive' }}">
+            <td>{{ rt.payee }}</td>
+            <td class="{{ 'amount-positive' if rt.amount >= 0 else 'amount-negative' }}">${{ "%.2f"|format(rt.amount) }}</td>
+            <td>{{ rt.frequency | capitalize }}</td>
+            <td>{{ rt.next_date }}</td>
+            <td>{{ category_map.get(rt.category_id, '') }}</td>
+            <td>{{ account_map.get(rt.account_id, '') }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('main.toggle_recurring', rt_id=rt.id) }}">
+                    <input type="hidden" name="is_active" value="{{ 0 if rt.is_active else 1 }}">
+                    <button type="submit" class="btn-small {{ 'status-active' if rt.is_active else 'status-paused' }}">
+                        {{ 'Active' if rt.is_active else 'Paused' }}
+                    </button>
+                </form>
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('main.delete_recurring', rt_id=rt.id) }}">
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No recurring transactions yet. Add one above to automate regular payments.</p>
+</div>
+{% endif %}
+{% endblock %}
