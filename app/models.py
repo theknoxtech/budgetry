@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import uuid
 
 
 @dataclass
@@ -33,30 +34,36 @@ class Account:
 
 @dataclass
 class Transaction:
-    id: str
     date: str
     payee: str
     amount: float
     memo: str
     category_id: str
+<<<<<<< HEAD
     account_id: str = ""
     plaid_transaction_id: str = ""
     budget_id: str = ""
 
+=======
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
 
 @dataclass
 class Category:
-    id: str
     name: str
     budgeted: float
     activity: float
     available: float
+<<<<<<< HEAD
     target_amount: float = 0.0
     target_type: str = ""
     target_date: str = ""
     budget_id: str = ""
     group_id: str = ""
 
+=======
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
 
 @dataclass
 class Payee:
@@ -69,6 +76,7 @@ class Payee:
 class CategoryGroup:
     id: str
     name: str
+<<<<<<< HEAD
     position: int = 0
     budget_id: str = ""
 
@@ -98,3 +106,33 @@ class Rule:
     action_value: str
     budget_id: str = ""
     created_at: str = ""
+=======
+    categories: list[str] = field(default_factory=list)
+    transactions: list[str] = field(default_factory=list)
+    payee: list[str] = field(default_factory=list)
+    
+    def add_category(self, category):
+        if category not in self.categories:
+            self.categories.append(category)
+    
+    def remove_category(self, category):
+        if category in self.categories:
+            self.categories.remove(category)
+    
+    def add_transaction(self, transaction):
+        if transaction not in self.transactions:
+            self.transactions.append(transaction)
+    
+    def remove_transaction(self, transaction):
+        if transaction in self.transactions:
+            self.transactions.remove(transaction)
+    
+    def add_payee(self, payee):
+        if payee not in self.payee:
+            self.payee.append(payee)
+    
+    def remove_payee(self, payee):
+        if payee in self.payee:
+            self.payee.remove(payee)
+
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8

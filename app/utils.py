@@ -1,18 +1,29 @@
 
 import os
+import re
 
-def validate_input(valid_options):
-    choice = input("Enter a number for the option you want: ")
+
+#console = Console(theme=custom_theme)
+
+#class Prompt(RichPrompt):
+#    @classmethod
+#    def ask(cls, *args, **kwargs):
+#        if "console" not in kwargs:
+#            kwargs["console"] = console
+#        return super().ask(*args, **kwargs)
+
+
+def validate_input(input):
+    match_regex = r"\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b"
     
-    if choice not in valid_options:
-        print(f"Invalid input. Please enter one of: {', '.join(valid_options)}")
-        return None
+    if re.findall(match_regex, input):
+        return True
     else:
-        return choice
+        return False
 
 def clear_terminal():
     if os.name == "nt":
         os.system("cls")
     elif os.name == "posix":
         os.system("clear")
-        return
+        

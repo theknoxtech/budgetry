@@ -1,5 +1,19 @@
+<<<<<<< HEAD
 flask
 plaid-python
 python-dotenv
 authlib
 requests
+=======
+annotated-doc==0.0.4
+click==8.1.8
+customtkinter==5.2.2
+darkdetect==0.8.0
+markdown-it-py==3.0.0
+mdurl==0.1.2
+packaging==26.0
+Pygments==2.19.2
+rich==14.3.3
+shellingham==1.5.4
+typer==0.23.2
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8

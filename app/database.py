@@ -497,16 +497,37 @@ def get_transaction_by_plaid_id(plaid_transaction_id):
     connection.close()
     return row is not None
 
-
-def delete_transaction_by_plaid_id(plaid_transaction_id):
-    connection = get_connection()
+# TODO: Implement delete_transaction(transaction_id)
+def delete_transaction(transaction_id):
+    connection = sqlite3.connect("budget.db")
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM transactions WHERE plaid_transaction_id = ?", (plaid_transaction_id,))
+    query = """
+        DELETE FROM transactions WHERE id = ?
+    """
+    cursor.execute(query, (transaction_id) )
     connection.commit()
     connection.close()
 
-
-# --- Categories ---
+def update_transaction(transaction):
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    query = """
+        UPDATE transactions 
+        SET date = ?, payee = ?, amount = ?, memo = ?, category_id = ? 
+        WHERE id = ?
+    """
+    values = (
+        transaction.date, 
+        transaction.payee, 
+        transaction.amount, 
+        transaction.memo, 
+        transaction.category_id, 
+        transaction.id
+    )
+    
+    cursor.execute(query, values)
+    connection.commit()
+    connection.close()
 
 def add_category(category):
     connection = get_connection()
@@ -518,17 +539,33 @@ def add_category(category):
     connection.commit()
     connection.close()
 
+# TODO: Implement delete_category(category_id)
+# TODO: Implement update_category(category_id, updated_category_obj)
 
+<<<<<<< HEAD
 def get_categories(budget_id):
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT id, name, budgeted, activity, available, target_amount, target_type, target_date, budget_id, group_id FROM categories WHERE budget_id = ?", (budget_id,))
+=======
+def get_categories(names_only=False, select_category=False):
+    connection = sqlite3.connect("budget.db")
+    cursor = connection.cursor()
+    
+    if names_only:
+        cursor.execute("SELECT name FROM categories")
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+
+    cursor.execute("SELECT * FROM categories")
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
     rows = cursor.fetchall()
     connection.close()
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4],
                      target_amount=row[5] or 0.0, target_type=row[6] or "", target_date=row[7] or "", budget_id=row[8] or "", group_id=row[9] or "") for row in rows]
 
 
+<<<<<<< HEAD
 def get_category_by_id(category_id):
     connection = get_connection()
     cursor = connection.cursor()
@@ -588,6 +625,10 @@ def add_payee(payee):
 
 
 def get_payees(budget_id):
+=======
+# TODO: Implement add_payee(payee)
+def get_payees():
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT id, name, budget_id FROM payees WHERE budget_id = ?", (budget_id,))
@@ -616,6 +657,7 @@ def add_plaid_item(plaid_item_id, account_id, access_token, item_id, institution
     connection.commit()
     connection.close()
 
+<<<<<<< HEAD
 
 def get_plaid_item_by_account(account_id):
     connection = get_connection()
@@ -904,3 +946,6 @@ def apply_rules(payee_name, amount, budget_id):
                 result['flagged'] = True
 
     return result
+=======
+# TODO: Implement update_payee(payee_id, updated_payee_obj)
+>>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
