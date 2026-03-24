@@ -549,17 +549,17 @@ def get_transaction_by_plaid_id(plaid_transaction_id):
 
 # TODO: Implement delete_transaction(transaction_id)
 def delete_transaction(transaction_id):
-    connection = sqlite3.connect("budget.db")
+    connection = get_db()
     cursor = connection.cursor()
     query = """
         DELETE FROM transactions WHERE id = ?
     """
-    cursor.execute(query, (transaction_id) )
+    cursor.execute(query, (transaction_id,))
     connection.commit()
     connection.close()
 
 def update_transaction(transaction):
-    connection = sqlite3.connect("budget.db")
+    connection = get_db()
     cursor = connection.cursor()
     query = """
         UPDATE transactions 
