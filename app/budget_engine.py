@@ -2,8 +2,19 @@ from collections import defaultdict
 from datetime import date
 from app.models import Transaction, Category
 
+# TODO Add feature to get total spending by day, month, year
 
 
+def total_spending():
+    transactions = get_transaction()
+    amounts = [transaction.amount for transaction in transactions]
+    return sum(amounts)
+
+
+
+
+
+"""
 def run_budget_engine(previous_month_available, budgeted, transactions):
     activity = {}
     income_total = 0.0
@@ -36,35 +47,14 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
             overspent_categories[category_id] = avail_amount
 
     return {
-        "income_total": income_total,
-        "available": available,
-        "activity": activity,
-        "to_be_budgeted": to_be_budgeted,
-        "overspent_categories": overspent_categories
-    }
+        "income_total ":income_total,
+        "available ": available,
+        "activity: ": activity,
+        "to_be_budgeted ": to_be_budgeted,
+        "overspent_categories ": overspent_categories
+        }
+"""
 
-
-def calculate_monthly_needed(target_amount, target_type, target_date, available=0.0):
-    if not target_type or target_amount <= 0:
-        return 0.0
-    if target_type == "weekly":
-        return target_amount * 4.33
-    elif target_type == "biweekly":
-        return target_amount * 2.17
-    elif target_type == "monthly":
-        return target_amount
-    elif target_type == "yearly":
-        return target_amount / 12.0
-    elif target_type == "custom":
-        remaining = target_amount - available
-        if remaining <= 0:
-            return 0.0
-        try:
-            target = date.fromisoformat(target_date)
-            today = date.today()
-            months_left = (target.year - today.year) * 12 + (target.month - today.month)
-            months_left = max(1, months_left)
-            return remaining / months_left
-        except (ValueError, TypeError):
-            return remaining
-    return 0.0
+if __name__ == "__main__":
+    # Example usage or testing
+    pass

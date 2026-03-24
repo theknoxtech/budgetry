@@ -1,17 +1,9 @@
 
 import os
 import re
+import customtkinter
 
-
-#console = Console(theme=custom_theme)
-
-#class Prompt(RichPrompt):
-#    @classmethod
-#    def ask(cls, *args, **kwargs):
-#        if "console" not in kwargs:
-#            kwargs["console"] = console
-#        return super().ask(*args, **kwargs)
-
+    
 
 def validate_input(input):
     match_regex = r"\b\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?\b"
