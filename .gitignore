@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 .claude
 GUI_CONVERSION_PLAN.md
+instance/
+*.db
+data/

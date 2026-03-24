@@ -4,16 +4,56 @@
 {% block content %}
 <h2>Categories</h2>
 
-<form method="POST" action="{{ url_for('main.add_category') }}" style="display: flex; gap: 0.5rem; align-items: end; margin-bottom: 1.5rem;">
-    <input type="text" name="name" placeholder="New category name" required style="margin: 0;">
-    <button type="submit">Add Category</button>
-</form>
+<div class="card">
+    <h3>Add Category</h3>
+    <form method="POST" action="{{ url_for('main.add_category') }}" class="form-inline">
+        <input type="text" name="name" placeholder="New category name" required>
+        {% if groups %}
+        <select name="group_id">
+            <option value="">No group</option>
+            {% for gr in groups %}
+            <option value="{{ gr.id }}">{{ gr.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <button type="submit">Add Category</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Category Groups</h3>
+    <form method="POST" action="{{ url_for('main.add_category_group') }}" class="form-inline">
+        <input type="text" name="name" placeholder="New group name" required>
+        <button type="submit">Add Group</button>
+    </form>
+    {% if groups %}
+    <div class="table-container" style="margin-top: 1rem;">
+    <table>
+        <thead><tr><th>Group Name</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for gr in groups %}
+            <tr>
+                <td>{{ gr.name }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('main.delete_category_group', group_id=gr.id) }}">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</div>
 
 {% if categories %}
-<table>
+<div class="table-container">
+<table class="sortable">
     <thead>
         <tr>
             <th>Name</th>
+            <th>Group</th>
             <th>Budgeted</th>
             <th>Activity</th>
             <th>Available</th>
@@ -24,11 +64,22 @@
         {% for cat in categories %}
         <tr>
             <td>{{ cat.name }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('main.set_category_group', category_id=cat.id) }}" class="budget-form">
+                    <select name="group_id" onchange="this.form.submit()" style="margin:0; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                        <option value="">None</option>
+                        {% for gr in groups %}
+                        <option value="{{ gr.id }}" {{ 'selected' if cat.group_id == gr.id else '' }}>{{ gr.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </td>
             <td>${{ "%.2f"|format(cat.budgeted) }}</td>
             <td>${{ "%.2f"|format(cat.activity) }}</td>
             <td>${{ "%.2f"|format(cat.available) }}</td>
-            <td>
-                <form method="POST" action="{{ url_for('main.delete_category', category_id=cat.id) }}" style="margin: 0;">
+            <td class="actions-cell">
+                <a href="{{ url_for('main.edit_category', category_id=cat.id) }}" class="btn-edit">Edit</a>
+                <form method="POST" action="{{ url_for('main.delete_category', category_id=cat.id) }}">
                     <button type="submit" class="btn-delete">Delete</button>
                 </form>
             </td>
@@ -36,7 +87,10 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
-<p>No categories yet. Add one above to get started.</p>
+<div class="empty-state">
+    <p>No categories yet. Add one above to get started.</p>
+</div>
 {% endif %}
 {% endblock %}

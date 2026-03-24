@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %} - Settings{% endblock %}
+
+{% block content %}
+<h2>Settings</h2>
+
+<nav class="settings-tabs">
+    <button class="settings-tab active" data-tab="accounts">Accounts</button>
+    <button class="settings-tab" data-tab="defaults">Defaults</button>
+    <button class="settings-tab" data-tab="rules">Rules</button>
+    <button class="settings-tab" data-tab="budget">Budget</button>
+</nav>
+
+<!-- Accounts Panel -->
+<div class="settings-panel active" data-tab="accounts">
+<div class="card">
+    <h3>Accounts</h3>
+    <form method="POST" action="{{ url_for('main.add_account') }}" class="form-inline">
+        <input type="text" name="name" placeholder="Account name" required>
+        <select name="account_type" required>
+            <option value="" disabled selected>Type</option>
+            <option value="checking">Checking</option>
+            <option value="savings">Savings</option>
+        </select>
+        <input type="text" name="institution" placeholder="Bank name" required>
+        <button type="submit">Add Account</button>
+    </form>
+
+    {% if accounts %}
+    <div class="table-container">
+    <table class="sortable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Institution</th>
+                <th>Balance</th>
+                <th>Bank Sync</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acct in accounts %}
+            <tr>
+                <td>{{ acct.name }}</td>
+                <td>{{ acct.account_type | capitalize }}</td>
+                <td>{{ acct.institution }}</td>
+                <td class="{{ 'amount-positive' if acct.balance >= 0 else 'amount-negative' }}">${{ "%.2f"|format(acct.balance) }}</td>
+                <td class="sync-status">
+                    {% if plaid_status.get(acct.id) %}
+                        <form method="POST" action="{{ url_for('main.plaid_sync', account_id=acct.id) }}">
+                            <button type="submit" class="btn-small">Sync</button>
+                        </form>
+                        {% if plaid_status[acct.id].last_synced %}
+                        <small>Last: {{ plaid_status[acct.id].last_synced[:16] }}</small>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('main.plaid_connect', account_id=acct.id) }}" class="btn-edit">Connect Bank</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('main.delete_account', account_id=acct.id) }}">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No accounts yet. Add one above to get started.</p>
+    </div>
+    {% endif %}
+</div>
+</div>
+
+<!-- Defaults Panel -->
+<div class="settings-panel" data-tab="defaults">
+<div class="card">
+    <h3>Defaults</h3>
+    <p style="font-size: 0.85rem; color: var(--pico-muted-color); margin-bottom: 0.75rem;">Set default values that pre-fill when adding new transactions.</p>
+    <form method="POST" action="{{ url_for('main.save_defaults') }}" class="form-inline">
+        <select name="default_account_id">
+            <option value="">No default account</option>
+            {% for acct in accounts %}
+            <option value="{{ acct.id }}" {{ 'selected' if defaults.get('default_account_id') == acct.id else '' }}>{{ acct.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="default_category_id">
+            <option value="">No default category</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {{ 'selected' if defaults.get('default_category_id') == cat.id else '' }}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Save Defaults</button>
+    </form>
+</div>
+</div>
+
+<!-- Rules Panel -->
+<div class="settings-panel" data-tab="rules">
+<div class="card">
+    <h3>Rules</h3>
+    <p style="font-size: 0.85rem; color: var(--pico-muted-color); margin-bottom: 1rem;">Automatically set categories, memos, or accounts when transactions match conditions.</p>
+
+    <!-- Payee Rules -->
+    <h4 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 1rem;">Payee Rules</h4>
+    <form method="POST" action="{{ url_for('main.add_rule') }}" class="form-inline rule-form">
+        <input type="hidden" name="rule_type" value="payee">
+        <select name="match_type">
+            <option value="exact">Exact match</option>
+            <option value="contains">Contains</option>
+            <option value="starts_with">Starts with</option>
+        </select>
+        <input type="text" name="match_value" placeholder="Payee name or pattern" required>
+        <select name="action_type" class="rule-action-type">
+            <option value="set_category">Set category</option>
+            <option value="set_memo">Set memo</option>
+            <option value="set_account">Set account</option>
+        </select>
+        <select name="action_value_category" class="rule-value rule-value-category">
+            <option value="" disabled selected>Category</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="action_value_account" class="rule-value rule-value-account" style="display:none;">
+            <option value="" disabled selected>Account</option>
+            {% for acct in accounts %}
+            <option value="{{ acct.id }}">{{ acct.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="action_value_text" class="rule-value rule-value-text" placeholder="Memo text" style="display:none;">
+        <button type="submit">Add Rule</button>
+    </form>
+
+    <!-- Amount Rules -->
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem;">Amount Rules</h4>
+    <form method="POST" action="{{ url_for('main.add_rule') }}" class="form-inline rule-form">
+        <input type="hidden" name="rule_type" value="amount">
+        <select name="match_type" class="amount-match-type">
+            <option value="greater_than">Greater than</option>
+            <option value="less_than">Less than</option>
+            <option value="between">Between</option>
+        </select>
+        <input type="number" name="match_value" placeholder="Amount" step="0.01" required>
+        <input type="number" name="match_value_high" placeholder="Max amount" step="0.01" class="amount-high" style="display:none;">
+        <select name="action_type" class="rule-action-type">
+            <option value="set_category">Set category</option>
+            <option value="flag">Flag transaction</option>
+        </select>
+        <select name="action_value_category" class="rule-value rule-value-category">
+            <option value="" disabled selected>Category</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Add Rule</button>
+    </form>
+
+    <!-- All Rules Table -->
+    {% if rules %}
+    <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1rem;">Active Rules</h4>
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Condition</th>
+                <th>Action</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rule in rules %}
+            <tr>
+                <td>{{ rule.rule_type | capitalize }}</td>
+                <td>
+                    {% if rule.match_field == 'payee_name' %}
+                        Payee
+                        {% if rule.match_type == 'exact' %}is{% elif rule.match_type == 'contains' %}contains{% elif rule.match_type == 'starts_with' %}starts with{% endif %}
+                        "{{ rule.match_value }}"
+                    {% elif rule.match_field == 'amount' %}
+                        Amount
+                        {% if rule.match_type == 'greater_than' %}&gt; ${{ rule.match_value }}{% elif rule.match_type == 'less_than' %}&lt; ${{ rule.match_value }}{% elif rule.match_type == 'between' %}between ${{ rule.match_value.split('|')[0] }} and ${{ rule.match_value.split('|')[1] }}{% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rule.action_type == 'set_category' %}Set category to <strong>{{ category_map.get(rule.action_value, 'Unknown') }}</strong>
+                    {% elif rule.action_type == 'set_memo' %}Set memo to <strong>"{{ rule.action_value }}"</strong>
+                    {% elif rule.action_type == 'set_account' %}Set account to <strong>{{ account_map.get(rule.action_value, 'Unknown') }}</strong>
+                    {% elif rule.action_type == 'flag' %}<strong>Flag transaction</strong>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('main.delete_rule', rule_id=rule.id) }}">
+                        <button type="submit" class="btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+</div>
+</div>
+
+<!-- Budget Panel -->
+<div class="settings-panel" data-tab="budget">
+<div class="card">
+    <h3>Budget Actions</h3>
+    <form method="POST" action="{{ url_for('main.create_shared_budget') }}" class="form-inline">
+        <input type="text" name="name" placeholder="New shared budget name" required>
+        <button type="submit">Create Shared Budget</button>
+    </form>
+
+    {% if budget and budget.is_shared %}
+    <form method="POST" action="{{ url_for('main.invite_to_budget', budget_id=budget.id) }}" class="form-inline">
+        <input type="email" name="email" placeholder="Invite by email" required>
+        <button type="submit">Invite</button>
+    </form>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

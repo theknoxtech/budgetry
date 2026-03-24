@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %} - Edit Payee{% endblock %}
+
+{% block content %}
+<h2>Edit Payee</h2>
+
+<div class="card">
+<form method="POST" action="{{ url_for('main.edit_payee', payee_id=payee.id) }}">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ payee.name }}" placeholder="Payee name" required>
+
+    <div class="form-actions">
+        <button type="submit">Save Changes</button>
+        <a href="{{ url_for('main.payees') }}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %} - Welcome{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+        <h2>Welcome, {{ username }}!</h2>
+        <p class="auth-subtitle">Name your first budget to get started.</p>
+
+        <form method="POST" action="{{ url_for('main.onboarding') }}">
+            <input type="text" name="budget_name" placeholder="e.g., Our Family Budget" required autofocus>
+            <button type="submit" class="auth-btn">Create Budget</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

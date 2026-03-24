@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %} - Edit Transaction{% endblock %}
+
+{% block content %}
+<h2>Edit Transaction</h2>
+
+<div class="card">
+<form method="POST" action="{{ url_for('main.edit_transaction', transaction_id=transaction.id) }}">
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" value="{{ transaction.date }}" required>
+
+    <label for="payee">Payee</label>
+    <input type="text" id="payee" name="payee" value="{{ transaction.payee }}" placeholder="Who did you pay?" required>
+
+    <label for="amount">Amount</label>
+    <input type="number" id="amount" name="amount" step="0.01" value="{{ transaction.amount }}" required>
+
+    <label for="account_id">Account</label>
+    <select id="account_id" name="account_id" required>
+        <option value="" disabled>Select an account</option>
+        {% for acct in accounts %}
+        <option value="{{ acct.id }}" {% if acct.id == transaction.account_id %}selected{% endif %}>{{ acct.name }} ({{ acct.institution }})</option>
+        {% endfor %}
+    </select>
+
+    <label for="category_id">Category</label>
+    <select id="category_id" name="category_id" required>
+        <option value="" disabled>Select a category</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if cat.id == transaction.category_id %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="memo">Memo</label>
+    <input type="text" id="memo" name="memo" value="{{ transaction.memo }}" placeholder="What was this for?">
+
+    <div class="form-actions">
+        <button type="submit">Save Changes</button>
+        <a href="{{ url_for('main.transactions') }}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+</div>
+{% endblock %}

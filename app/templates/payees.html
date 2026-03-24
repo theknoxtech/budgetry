@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %} - Payees{% endblock %}
+
+{% block content %}
+<h2>Payees</h2>
+
+<form method="POST" action="{{ url_for('main.add_payee') }}" class="form-inline">
+    <input type="text" name="name" placeholder="New payee name" required>
+    <button type="submit">Add Payee</button>
+</form>
+
+{% if payees %}
+<div class="table-container">
+<table class="sortable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for payee in payees %}
+        <tr>
+            <td>{{ payee.name }}</td>
+            <td class="actions-cell">
+                <a href="{{ url_for('main.edit_payee', payee_id=payee.id) }}" class="btn-edit">Edit</a>
+                <form method="POST" action="{{ url_for('main.delete_payee', payee_id=payee.id) }}">
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No payees yet. Add one above or they'll be created automatically from transactions.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %} - Verify MFA{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+        <h2>Two-Factor Authentication</h2>
+        <p class="auth-subtitle">Enter the 6-digit code from your authenticator app</p>
+
+        <form method="POST" action="{{ url_for('main.mfa_challenge') }}">
+            <label for="code">Verification Code</label>
+            <input type="text" id="code" name="code" placeholder="000000" required
+                   maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+                   style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+            <button type="submit" class="auth-btn">Verify</button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem;">
+            <a href="{{ url_for('main.login') }}">Back to login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

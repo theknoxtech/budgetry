@@ -1,5 +1,6 @@
 from collections import defaultdict
-from app.models import Transaction, Category, Budget
+from datetime import date
+from app.models import Transaction, Category
 
 # TODO Add feature to get total spending by day, month, year
 
@@ -26,7 +27,7 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         else:
             activity.setdefault(category_id, 0.0)
             activity[category_id] += amount
-    
+
     # Calculate Available Amounts
     available = {}
     for category_id, budget in budgeted.items():
@@ -35,17 +36,16 @@ def run_budget_engine(previous_month_available, budgeted, transactions):
         # TODO: Verify math logic. If spending is negative, subtracting it increases available amount.
         # Should likely be: previous_month + budget + spent_money (if spent_money is negative)
         available[category_id] = previous_month + budget - spent_money
-    
+
     # Calculate Amount to be Budgeted
     to_be_budgeted = income_total - sum(budgeted.values())
-    
+
     # Calculate Overspent Categories
     overspent_categories = {}
     for category_id, avail_amount in available.items():
         if avail_amount < 0:
             overspent_categories[category_id] = avail_amount
-            
-    # TODO: Fix dictionary keys (remove trailing spaces like "available ") to make them easier to access
+
     return {
         "income_total ":income_total,
         "available ": available,

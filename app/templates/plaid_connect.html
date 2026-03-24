@@ -3,10 +3,15 @@
 
 {% block content %}
 <h2>Connect {{ account.name }} to your bank</h2>
-<p>Click the button below to securely connect your {{ account.institution }} account through Plaid.</p>
 
-<button id="connect-btn">Connect with Plaid</button>
-<a href="{{ url_for('main.accounts') }}" role="button" class="secondary" style="margin-left: 0.5rem;">Cancel</a>
+<div class="card">
+    <p>Click the button below to securely connect your {{ account.institution }} account through Plaid.</p>
+
+    <div class="plaid-actions">
+        <button id="connect-btn">Connect with Plaid</button>
+        <a href="{{ url_for('main.accounts') }}" role="button" class="secondary">Cancel</a>
+    </div>
+</div>
 
 <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
 <script>

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %} - Profile{% endblock %}
+
+{% block content %}
+<h2>Your Profile</h2>
+
+<div class="card">
+    <h3>Account Info</h3>
+    <p><strong>Email:</strong> {{ user.email or 'Not set' }}</p>
+    <p><strong>Member since:</strong> {{ user.created_at[:10] }}</p>
+
+    <form method="POST" action="{{ url_for('main.update_display_name') }}" class="form-inline" style="margin-top: 1rem;">
+        <label for="username" style="margin: 0; align-self: center;"><strong>Display Name</strong></label>
+        <input type="text" id="username" name="username" value="{{ user.username }}" required style="max-width: 250px;">
+        <button type="submit">Update Name</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Security</h3>
+
+    {% if is_local_user %}
+    {# Local user: change password form #}
+    <div style="margin-bottom: 1.25rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Change Password</h4>
+        <form method="POST" action="{{ url_for('main.change_password') }}">
+            <label for="current_password">Current Password</label>
+            <input type="password" id="current_password" name="current_password" required style="max-width: 300px;">
+            <label for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" required minlength="8" style="max-width: 300px;">
+            <label for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required style="max-width: 300px;">
+            <button type="submit">Update Password</button>
+        </form>
+    </div>
+    {% elif user.auth0_id and user.auth0_id.startswith('auth0|') %}
+    {# Auth0 password user #}
+    <div style="margin-bottom: 1rem;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Send a password reset link to your email address.</p>
+        <form method="POST" action="{{ url_for('main.reset_password') }}">
+            <button type="submit">Send Password Reset Email</button>
+        </form>
+    </div>
+    {% else %}
+    <p style="font-size: 0.85rem; color: var(--text-secondary);">Password is managed by your social login provider.</p>
+    {% endif %}
+
+    <div style="margin-top: 1.25rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Multi-Factor Authentication</h4>
+        {% if user.mfa_enabled %}
+        <p class="mfa-status mfa-enabled">MFA is enabled</p>
+        {% if is_local_user %}
+        <form method="POST" action="{{ url_for('main.disable_mfa') }}" style="margin-top: 0.5rem;">
+            <button type="submit" class="btn-small outline">Disable MFA</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Add an extra layer of security to your account.</p>
+        <a href="{{ url_for('main.setup_mfa') }}" role="button" class="btn-small">Enable MFA</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if budget_roles %}
+<div class="card">
+    <h3>Your Budgets</h3>
+    <div class="table-container" style="box-shadow: none; border: none; margin: 0;">
+    <table>
+        <thead>
+            <tr>
+                <th>Budget</th>
+                <th>Role</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for br in budget_roles %}
+            <tr>
+                <td>{{ br.budget.name }}</td>
+                <td>{{ br.role | capitalize }}</td>
+                <td>{{ "Shared" if br.budget.is_shared else "Personal" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

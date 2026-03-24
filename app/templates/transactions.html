@@ -4,10 +4,64 @@
 {% block content %}
 <h2>Transactions</h2>
 
-<a href="{{ url_for('main.add_transaction') }}" role="button" style="margin-bottom: 1.5rem; display: inline-block;">Add Transaction</a>
+<a href="{{ url_for('main.add_transaction') }}" role="button" class="btn-small">Add Transaction</a>
+
+<!-- Search & Filters -->
+<div class="card" style="margin-top: 1rem;">
+    <form method="GET" action="{{ url_for('main.transactions') }}" class="filter-form">
+        <div class="filter-row">
+            <input type="text" name="search" placeholder="Search payee, memo, or category..." value="{{ search }}" class="filter-search">
+            <button type="submit" class="btn-small">Search</button>
+            {% if search or filter_category or filter_account or filter_payee or filter_date_from or filter_date_to or filter_amount_min or filter_amount_max %}
+            <a href="{{ url_for('main.transactions') }}" class="btn-edit">Clear</a>
+            {% endif %}
+        </div>
+        <details class="filter-details" {% if filter_category or filter_account or filter_date_from or filter_date_to or filter_amount_min or filter_amount_max %}open{% endif %}>
+            <summary>Filters</summary>
+            <div class="filter-grid">
+                <div>
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="">All categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {{ 'selected' if filter_category == cat.id else '' }}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Account</label>
+                    <select name="account">
+                        <option value="">All accounts</option>
+                        {% for acct in accounts %}
+                        <option value="{{ acct.id }}" {{ 'selected' if filter_account == acct.id else '' }}>{{ acct.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label>Date from</label>
+                    <input type="date" name="date_from" value="{{ filter_date_from }}">
+                </div>
+                <div>
+                    <label>Date to</label>
+                    <input type="date" name="date_to" value="{{ filter_date_to }}">
+                </div>
+                <div>
+                    <label>Amount min</label>
+                    <input type="number" name="amount_min" step="0.01" placeholder="Min" value="{{ filter_amount_min }}">
+                </div>
+                <div>
+                    <label>Amount max</label>
+                    <input type="number" name="amount_max" step="0.01" placeholder="Max" value="{{ filter_amount_max }}">
+                </div>
+            </div>
+        </details>
+    </form>
+</div>
 
 {% if transactions %}
-<table>
+<p class="text-muted" style="font-size: 0.85rem; margin-bottom: 0.5rem;">{{ transactions|length }} transaction{{ 's' if transactions|length != 1 else '' }}</p>
+<div class="table-container">
+<table class="sortable">
     <thead>
         <tr>
             <th>Date</th>
@@ -34,8 +88,9 @@
             </td>
             <td class="{{ 'amount-positive' if txn.amount >= 0 else 'amount-negative' }}">${{ "%.2f"|format(txn.amount) }}</td>
             <td>{{ txn.memo }}</td>
-            <td>
-                <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=txn.id) }}" style="margin: 0;">
+            <td class="actions-cell">
+                <a href="{{ url_for('main.edit_transaction', transaction_id=txn.id) }}" class="btn-edit">Edit</a>
+                <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=txn.id) }}">
                     <button type="submit" class="btn-delete">Delete</button>
                 </form>
             </td>
@@ -43,7 +98,10 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
-<p>No transactions yet. <a href="{{ url_for('main.add_transaction') }}">Add your first transaction</a>.</p>
+<div class="empty-state">
+    <p>No transactions found. {% if search or filter_category or filter_account %}<a href="{{ url_for('main.transactions') }}">Clear filters</a> or {% endif %}<a href="{{ url_for('main.add_transaction') }}">Add your first transaction</a>.</p>
+</div>
 {% endif %}
 {% endblock %}
