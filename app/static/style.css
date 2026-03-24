@@ -453,7 +453,7 @@ nav.nav-bar a:hover {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    overflow-x: auto;
+    overflow: visible;
     margin-bottom: 0.75rem;
 }
 
