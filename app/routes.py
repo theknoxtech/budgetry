@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -933,6 +933,40 @@ def _process_recurring(budget_id):
             database.add_transaction(txn)
             rt.next_date = _advance_next_date(rt.next_date, rt.frequency)
             database.update_recurring_next_date(rt.id, rt.next_date)
+
+
+@bp.route('/cashflow')
+@login_required
+def cashflow():
+    month_str = request.args.get('month', '')
+    today = date.today()
+    try:
+        year, month = int(month_str[:4]), int(month_str[5:7])
+    except (ValueError, IndexError):
+        year, month = today.year, today.month
+
+    month_label = f"{month_name[month]} {year}"
+    if month == 1:
+        prev_month = f"{year - 1:04d}-12"
+    else:
+        prev_month = f"{year:04d}-{month - 1:02d}"
+    if month == 12:
+        next_month = f"{year + 1:04d}-01"
+    else:
+        next_month = f"{year:04d}-{month + 1:02d}"
+
+    accounts = database.get_accounts(g.budget_id)
+    transactions = database.get_transaction(g.budget_id)
+    recurring = database.get_recurring_transactions(g.budget_id)
+
+    calendar_days = build_cashflow_calendar(accounts, transactions, recurring, year, month)
+
+    return render_template('cashflow.html',
+                           calendar_days=calendar_days,
+                           month_label=month_label,
+                           prev_month=prev_month,
+                           next_month=next_month,
+                           starting_balance=sum(a.balance for a in accounts))
 
 
 @bp.route('/recurring')

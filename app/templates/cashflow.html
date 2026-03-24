@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %} - Cash Flow{% endblock %}
+
+{% block content %}
+<h2>Cash Flow</h2>
+
+<div class="month-selector">
+    <a href="{{ url_for('main.cashflow', month=prev_month) }}">&larr;</a>
+    <h3>{{ month_label }}</h3>
+    <a href="{{ url_for('main.cashflow', month=next_month) }}">&rarr;</a>
+</div>
+
+<div class="cashflow-summary">
+    <div class="report-stat">
+        <small>Starting Balance</small>
+        <div class="{{ 'amount-positive' if starting_balance >= 0 else 'amount-negative' }}">
+            ${{ "%.2f"|format(starting_balance) }}
+        </div>
+    </div>
+    {% set end_balance = calendar_days[-1].balance if calendar_days else starting_balance %}
+    <div class="report-stat">
+        <small>Projected End</small>
+        <div class="{{ 'amount-positive' if end_balance >= 0 else 'amount-negative' }}">
+            ${{ "%.2f"|format(end_balance) }}
+        </div>
+    </div>
+    {% set total_in = calendar_days | map(attribute='inflows') | sum %}
+    {% set total_out = calendar_days | map(attribute='outflows') | sum %}
+    <div class="report-stat">
+        <small>Total Inflows</small>
+        <div class="amount-positive">${{ "%.2f"|format(total_in) }}</div>
+    </div>
+    <div class="report-stat">
+        <small>Total Outflows</small>
+        <div class="amount-negative">${{ "%.2f"|format(total_out) }}</div>
+    </div>
+</div>
+
+<div class="cashflow-calendar">
+    <div class="cashflow-weekdays">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div class="cashflow-grid">
+        {# Add empty cells for days before the 1st #}
+        {% if calendar_days %}
+        {% for _ in range(calendar_days[0].weekday) %}
+        <div class="cashflow-day empty"></div>
+        {% endfor %}
+        {% endif %}
+
+        {% for day in calendar_days %}
+        <div class="cashflow-day {{ 'today' if day.is_today else '' }} {{ 'past' if day.is_past else '' }} {{ 'future' if day.is_future else '' }} {{ 'has-events' if day.events else '' }}">
+            <div class="cashflow-day-num">{{ day.day }}</div>
+            {% if day.events %}
+            <div class="cashflow-events">
+                {% for evt in day.events[:3] %}
+                <div class="cashflow-event {{ 'inflow' if evt.amount >= 0 else 'outflow' }} {{ 'recurring' if evt.is_recurring else '' }}">
+                    <span class="evt-payee">{{ evt.payee[:12] }}</span>
+                    <span class="evt-amount">${{ "%.0f"|format(evt.amount|abs) }}</span>
+                </div>
+                {% endfor %}
+                {% if day.events|length > 3 %}
+                <div class="cashflow-more">+{{ day.events|length - 3 }} more</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <div class="cashflow-balance {{ 'amount-positive' if day.balance >= 0 else 'amount-negative' }}">
+                ${{ "%.0f"|format(day.balance) }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if calendar_days %}
+<div class="cashflow-list">
+    <h3>Daily Breakdown</h3>
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>In</th>
+                <th>Out</th>
+                <th>Net</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for day in calendar_days %}
+            {% if day.events %}
+            <tr class="{{ 'cashflow-today-row' if day.is_today else '' }}">
+                <td>
+                    <strong>{{ day.day }}</strong>
+                    {% if day.is_today %}<span class="cashflow-today-badge">Today</span>{% endif %}
+                </td>
+                <td class="amount-positive">{% if day.inflows %}${{ "%.2f"|format(day.inflows) }}{% endif %}</td>
+                <td class="amount-negative">{% if day.outflows %}${{ "%.2f"|format(day.outflows) }}{% endif %}</td>
+                <td class="{{ 'amount-positive' if day.net >= 0 else 'amount-negative' }}">
+                    ${{ "%.2f"|format(day.net) }}
+                </td>
+                <td class="{{ 'amount-positive' if day.balance >= 0 else 'amount-negative' }}">
+                    ${{ "%.2f"|format(day.balance) }}
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
