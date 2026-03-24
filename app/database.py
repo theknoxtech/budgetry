@@ -4,7 +4,9 @@ import uuid
 from datetime import datetime
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, Rule, CategoryGroup, RecurringTransaction
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'budget.db')
+_instance_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+os.makedirs(_instance_dir, exist_ok=True)
+DB_PATH = os.path.join(_instance_dir, 'budgetry.db')
 
 
 def get_connection():
@@ -104,23 +106,17 @@ def init_db():
     if "budget_id" not in payee_columns:
         cursor.execute("ALTER TABLE payees ADD COLUMN budget_id TEXT DEFAULT ''")
 
-    # Users migrations (Auth0 transition)
-    # If the old schema has password_hash, recreate the table without it
+    # Users migrations
     cursor.execute("PRAGMA table_info(users)")
     user_columns = {col[1] for col in cursor.fetchall()}
-    if "password_hash" in user_columns:
-        cursor.execute("""CREATE TABLE users_new(
-            id TEXT PRIMARY KEY, auth0_id TEXT DEFAULT '', email TEXT DEFAULT '',
-            username TEXT NOT NULL, created_at TEXT NOT NULL)""")
-        cursor.execute("""INSERT INTO users_new(id, username, created_at)
-            SELECT id, username, created_at FROM users""")
-        cursor.execute("DROP TABLE users")
-        cursor.execute("ALTER TABLE users_new RENAME TO users")
-    else:
-        if "auth0_id" not in user_columns:
-            cursor.execute("ALTER TABLE users ADD COLUMN auth0_id TEXT DEFAULT ''")
-        if "email" not in user_columns:
-            cursor.execute("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''")
+    if "auth0_id" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN auth0_id TEXT DEFAULT ''")
+    if "email" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''")
+    if "password_hash" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT DEFAULT ''")
+    if "totp_secret" not in user_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN totp_secret TEXT DEFAULT ''")
 
     # User management columns
     cursor.execute("PRAGMA table_info(users)")
@@ -198,6 +194,21 @@ def init_db():
 
 # --- Users ---
 
+_USER_COLUMNS = "id, auth0_id, email, username, created_at, is_admin, is_active, mfa_enabled, password_hash, totp_secret"
+
+
+def _row_to_user(row):
+    if not row:
+        return None
+    return User(
+        id=row[0], auth0_id=row[1], email=row[2], username=row[3],
+        created_at=row[4], is_admin=row[5] or 0,
+        is_active=row[6] if row[6] is not None else 1,
+        mfa_enabled=row[7] or 0, password_hash=row[8] or "",
+        totp_secret=row[9] or ""
+    )
+
+
 def add_user(user):
     connection = get_connection()
     cursor = connection.cursor()
@@ -212,34 +223,74 @@ def add_user(user):
 def get_user_by_auth0_id(auth0_id):
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, auth0_id, email, username, created_at, is_admin, is_active, mfa_enabled FROM users WHERE auth0_id = ?", (auth0_id,))
+    cursor.execute(f"SELECT {_USER_COLUMNS} FROM users WHERE auth0_id = ?", (auth0_id,))
     row = cursor.fetchone()
     connection.close()
-    if row:
-        return User(id=row[0], auth0_id=row[1], email=row[2], username=row[3], created_at=row[4], is_admin=row[5] or 0, is_active=row[6] if row[6] is not None else 1, mfa_enabled=row[7] or 0)
-    return None
+    return _row_to_user(row)
 
 
 def get_user_by_email(email):
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, auth0_id, email, username, created_at, is_admin, is_active, mfa_enabled FROM users WHERE email = ?", (email,))
+    cursor.execute(f"SELECT {_USER_COLUMNS} FROM users WHERE email = ?", (email,))
     row = cursor.fetchone()
     connection.close()
-    if row:
-        return User(id=row[0], auth0_id=row[1], email=row[2], username=row[3], created_at=row[4], is_admin=row[5] or 0, is_active=row[6] if row[6] is not None else 1, mfa_enabled=row[7] or 0)
-    return None
+    return _row_to_user(row)
 
 
 def get_user_by_id(user_id):
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, auth0_id, email, username, created_at, is_admin, is_active, mfa_enabled FROM users WHERE id = ?", (user_id,))
+    cursor.execute(f"SELECT {_USER_COLUMNS} FROM users WHERE id = ?", (user_id,))
     row = cursor.fetchone()
     connection.close()
-    if row:
-        return User(id=row[0], auth0_id=row[1], email=row[2], username=row[3], created_at=row[4], is_admin=row[5] or 0, is_active=row[6] if row[6] is not None else 1, mfa_enabled=row[7] or 0)
-    return None
+    return _row_to_user(row)
+
+
+def get_user_by_username(username):
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT {_USER_COLUMNS} FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    connection.close()
+    return _row_to_user(row)
+
+
+def create_local_user(username, email, password_hash):
+    now = datetime.now().isoformat()
+    user = User(
+        id=str(uuid.uuid4()),
+        auth0_id="",
+        email=email,
+        username=username,
+        created_at=now,
+        password_hash=password_hash,
+    )
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        "INSERT INTO users(id, auth0_id, email, username, created_at, password_hash) VALUES(?,?,?,?,?,?)",
+        (user.id, "", email, username, now, password_hash)
+    )
+    connection.commit()
+    connection.close()
+    return user
+
+
+def update_password_hash(user_id, password_hash):
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+    connection.commit()
+    connection.close()
+
+
+def update_totp_secret(user_id, totp_secret):
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("UPDATE users SET totp_secret = ? WHERE id = ?", (totp_secret, user_id))
+    connection.commit()
+    connection.close()
 
 
 def upsert_user_from_auth0(auth0_id, email, username):
@@ -297,11 +348,10 @@ def update_username(user_id, username):
 def get_all_users():
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, auth0_id, email, username, created_at, is_admin, is_active, mfa_enabled FROM users ORDER BY created_at ASC")
+    cursor.execute(f"SELECT {_USER_COLUMNS} FROM users ORDER BY created_at ASC")
     rows = cursor.fetchall()
     connection.close()
-    return [User(id=r[0], auth0_id=r[1], email=r[2], username=r[3], created_at=r[4],
-                 is_admin=r[5] or 0, is_active=r[6] if r[6] is not None else 1, mfa_enabled=r[7] or 0) for r in rows]
+    return [_row_to_user(r) for r in rows]
 
 
 def set_user_active(user_id, is_active):
@@ -542,30 +592,16 @@ def add_category(category):
 # TODO: Implement delete_category(category_id)
 # TODO: Implement update_category(category_id, updated_category_obj)
 
-<<<<<<< HEAD
 def get_categories(budget_id):
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT id, name, budgeted, activity, available, target_amount, target_type, target_date, budget_id, group_id FROM categories WHERE budget_id = ?", (budget_id,))
-=======
-def get_categories(names_only=False, select_category=False):
-    connection = sqlite3.connect("budget.db")
-    cursor = connection.cursor()
-    
-    if names_only:
-        cursor.execute("SELECT name FROM categories")
-        rows = cursor.fetchall()
-        return [row[0] for row in rows]
-
-    cursor.execute("SELECT * FROM categories")
->>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
     rows = cursor.fetchall()
     connection.close()
     return [Category(id=row[0], name=row[1], budgeted=row[2], activity=row[3], available=row[4],
                      target_amount=row[5] or 0.0, target_type=row[6] or "", target_date=row[7] or "", budget_id=row[8] or "", group_id=row[9] or "") for row in rows]
 
 
-<<<<<<< HEAD
 def get_category_by_id(category_id):
     connection = get_connection()
     cursor = connection.cursor()
@@ -625,10 +661,6 @@ def add_payee(payee):
 
 
 def get_payees(budget_id):
-=======
-# TODO: Implement add_payee(payee)
-def get_payees():
->>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT id, name, budget_id FROM payees WHERE budget_id = ?", (budget_id,))
@@ -657,7 +689,6 @@ def add_plaid_item(plaid_item_id, account_id, access_token, item_id, institution
     connection.commit()
     connection.close()
 
-<<<<<<< HEAD
 
 def get_plaid_item_by_account(account_id):
     connection = get_connection()
@@ -946,6 +977,3 @@ def apply_rules(payee_name, amount, budget_id):
                 result['flagged'] = True
 
     return result
-=======
-# TODO: Implement update_payee(payee_id, updated_payee_obj)
->>>>>>> 582fc96af9373069e75211dc8180b2ae7100e0e8

@@ -1,0 +1,9 @@
+services:
+  budgetry:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/instance
+    env_file: .env
+    restart: unless-stopped

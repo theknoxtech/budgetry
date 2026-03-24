@@ -19,7 +19,22 @@
 <div class="card">
     <h3>Security</h3>
 
-    {% if user.auth0_id and user.auth0_id.startswith('auth0|') %}
+    {% if is_local_user %}
+    {# Local user: change password form #}
+    <div style="margin-bottom: 1.25rem;">
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Change Password</h4>
+        <form method="POST" action="{{ url_for('main.change_password') }}">
+            <label for="current_password">Current Password</label>
+            <input type="password" id="current_password" name="current_password" required style="max-width: 300px;">
+            <label for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" required minlength="8" style="max-width: 300px;">
+            <label for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required style="max-width: 300px;">
+            <button type="submit">Update Password</button>
+        </form>
+    </div>
+    {% elif user.auth0_id and user.auth0_id.startswith('auth0|') %}
+    {# Auth0 password user #}
     <div style="margin-bottom: 1rem;">
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Send a password reset link to your email address.</p>
         <form method="POST" action="{{ url_for('main.reset_password') }}">
@@ -34,9 +49,14 @@
         <h4 style="font-size: 1rem; margin-bottom: 0.5rem;">Multi-Factor Authentication</h4>
         {% if user.mfa_enabled %}
         <p class="mfa-status mfa-enabled">MFA is enabled</p>
+        {% if is_local_user %}
+        <form method="POST" action="{{ url_for('main.disable_mfa') }}" style="margin-top: 0.5rem;">
+            <button type="submit" class="btn-small outline">Disable MFA</button>
+        </form>
+        {% endif %}
         {% else %}
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Add an extra layer of security to your account.</p>
-        <a href="{{ url_for('main.enroll_mfa') }}" role="button" class="btn-small">Enable MFA</a>
+        <a href="{{ url_for('main.setup_mfa') }}" role="button" class="btn-small">Enable MFA</a>
         {% endif %}
     </div>
 </div>

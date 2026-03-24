@@ -5,58 +5,65 @@
 <h2>User Management</h2>
 
 {% if users %}
-<div class="table-container">
-<table class="sortable">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Member Since</th>
-            <th>MFA</th>
-            <th>Status</th>
-            <th>Admin</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for u in users %}
-        <tr class="{{ '' if u.is_active else 'recurring-inactive' }}">
-            <td>{{ u.username }}</td>
-            <td>{{ u.email or '—' }}</td>
-            <td>{{ u.created_at[:10] }}</td>
-            <td>
-                {% if u.mfa_enabled %}
-                <span class="target-on-track">Enabled</span>
-                {% else %}
-                <span style="font-size: 0.8rem; color: var(--text-muted);">Off</span>
+<div class="admin-users-list">
+    {% for u in users %}
+    <div class="card admin-user-card">
+        <div class="admin-user-info">
+            <div class="admin-user-header">
+                <strong>{{ u.username }}</strong>
+                {% if u.id == current_user.id %}
+                <span class="admin-you-badge">(You)</span>
                 {% endif %}
-            </td>
-            <td>
-                {% if u.is_active %}
-                <span class="target-on-track">Active</span>
-                {% else %}
-                <span class="uncategorized">Inactive</span>
+                {% if u.is_admin %}
+                <span class="admin-role-badge">Admin</span>
                 {% endif %}
-            </td>
-            <td>{{ "Yes" if u.is_admin else "No" }}</td>
-            <td class="actions-cell">
-                {% if u.id != current_user.id %}
-                <form method="POST" action="{{ url_for('main.toggle_user_active', user_id=u.id) }}">
-                    <button type="submit" class="{{ 'btn-delete' if u.is_active else 'btn-edit' }}">
-                        {{ 'Deactivate' if u.is_active else 'Activate' }}
-                    </button>
-                </form>
-                {% endif %}
-                {% if u.auth0_id %}
-                <form method="POST" action="{{ url_for('main.refresh_user_mfa', user_id=u.id) }}">
-                    <button type="submit" class="btn-small" style="font-size: 0.75rem;">Refresh MFA</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </div>
+            <div class="admin-user-meta">
+                <span>{{ u.email or 'No email' }}</span>
+                <span>Joined {{ u.created_at[:10] }}</span>
+                <span>
+                    {% if u.is_active %}
+                    <span class="target-on-track">Active</span>
+                    {% else %}
+                    <span class="uncategorized">Inactive</span>
+                    {% endif %}
+                </span>
+                <span>
+                    MFA:
+                    {% if u.mfa_enabled %}
+                    <span class="target-on-track">On</span>
+                    {% else %}
+                    Off
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        {% if u.id != current_user.id %}
+        <div class="admin-user-actions">
+            <form method="POST" action="{{ url_for('main.toggle_user_active', user_id=u.id) }}">
+                <button type="submit" class="{{ 'btn-delete' if u.is_active else 'btn-edit' }}">
+                    {{ 'Deactivate' if u.is_active else 'Activate' }}
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('main.toggle_user_admin', user_id=u.id) }}">
+                <button type="submit" class="btn-edit">
+                    {{ 'Demote' if u.is_admin else 'Promote' }}
+                </button>
+            </form>
+            {% if u.password_hash %}
+            <form method="POST" action="{{ url_for('main.admin_reset_password', user_id=u.id) }}">
+                <button type="submit" class="btn-edit">Reset Password</button>
+            </form>
+            {% endif %}
+            {% if u.auth0_id %}
+            <form method="POST" action="{{ url_for('main.refresh_user_mfa', user_id=u.id) }}">
+                <button type="submit" class="btn-edit">Refresh MFA</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
 </div>
 {% else %}
 <div class="empty-state">

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
 from app.budget_engine import run_budget_engine, calculate_monthly_needed
-from app.auth import login_required, admin_required, oauth
+from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
 from collections import defaultdict
@@ -17,6 +17,13 @@ bp = Blueprint('main', __name__)
 @bp.before_request
 def load_budget_context():
     if 'user_id' in session:
+        # Validate the user still exists in the database
+        user = database.get_user_by_id(session['user_id'])
+        if not user:
+            session.clear()
+            g.user_id = None
+            g.budget_id = None
+            return
         g.user_id = session['user_id']
         g.budget_id = session.get('active_budget_id', '')
     else:
@@ -24,52 +31,117 @@ def load_budget_context():
         g.budget_id = None
 
 
-# --- Auth Routes (Auth0) ---
+# --- Auth Routes ---
 
 @bp.route('/login')
 def login():
     if 'user_id' in session:
         return redirect(url_for('main.budget'))
-    return render_template('login.html')
+    return render_template('login.html', auth0_enabled=is_auth0_enabled())
 
 
-@bp.route('/auth/login')
-def auth_login():
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for('main.callback', _external=True)
-    )
+@bp.route('/auth/local-login', methods=['POST'])
+def local_login():
+    from werkzeug.security import check_password_hash
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
 
+    if not username or not password:
+        flash('Username and password are required.', 'error')
+        return redirect(url_for('main.login'))
 
-@bp.route('/auth/signup')
-def signup():
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for('main.callback', _external=True),
-        screen_hint="signup"
-    )
+    user = database.get_user_by_username(username)
+    if not user or not user.password_hash or not check_password_hash(user.password_hash, password):
+        flash('Invalid username or password.', 'error')
+        return redirect(url_for('main.login'))
 
-
-@bp.route('/auth/callback')
-def callback():
-    token = oauth.auth0.authorize_access_token()
-    userinfo = token.get("userinfo", {})
-
-    # Upsert user in our DB
-    user = database.upsert_user_from_auth0(
-        auth0_id=userinfo["sub"],
-        email=userinfo.get("email", ""),
-        username=userinfo.get("nickname", userinfo.get("name", "User"))
-    )
-
-    # Block deactivated users
     if not user.is_active:
-        session.clear()
         flash('Your account has been deactivated. Contact an administrator.', 'error')
         return redirect(url_for('main.login'))
 
-    # Set session
-    session['user_id'] = user.id
+    # Check if MFA is enabled (TOTP)
+    if user.totp_secret:
+        session['mfa_user_id'] = user.id
+        return redirect(url_for('main.mfa_challenge'))
 
-    # Set active budget or redirect to onboarding for first-time users
+    return _complete_login(user)
+
+
+@bp.route('/auth/register', methods=['GET', 'POST'])
+def register():
+    if 'user_id' in session:
+        return redirect(url_for('main.budget'))
+
+    if request.method == 'POST':
+        from werkzeug.security import generate_password_hash
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not username or not password:
+            flash('Username and password are required.', 'error')
+            return redirect(url_for('main.register'))
+
+        if password != confirm:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('main.register'))
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters.', 'error')
+            return redirect(url_for('main.register'))
+
+        if database.get_user_by_username(username):
+            flash('Username already taken.', 'error')
+            return redirect(url_for('main.register'))
+
+        if email and database.get_user_by_email(email):
+            flash('Email already registered.', 'error')
+            return redirect(url_for('main.register'))
+
+        pw_hash = generate_password_hash(password)
+        user = database.create_local_user(username, email, pw_hash)
+
+        # First user auto-promoted to admin
+        all_users = database.get_all_users()
+        if len(all_users) == 1:
+            connection = database.get_connection()
+            cursor = connection.cursor()
+            cursor.execute("UPDATE users SET is_admin = 1 WHERE id = ?", (user.id,))
+            connection.commit()
+            connection.close()
+
+        return _complete_login(user)
+
+    return render_template('register.html', auth0_enabled=is_auth0_enabled())
+
+
+@bp.route('/auth/mfa-challenge', methods=['GET', 'POST'])
+def mfa_challenge():
+    if 'mfa_user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    if request.method == 'POST':
+        import pyotp
+        code = request.form.get('code', '').strip()
+        user = database.get_user_by_id(session['mfa_user_id'])
+        if not user or not user.totp_secret:
+            session.pop('mfa_user_id', None)
+            return redirect(url_for('main.login'))
+
+        totp = pyotp.TOTP(user.totp_secret)
+        if totp.verify(code):
+            session.pop('mfa_user_id', None)
+            return _complete_login(user)
+        else:
+            flash('Invalid verification code.', 'error')
+
+    return render_template('mfa_challenge.html')
+
+
+def _complete_login(user):
+    """Set session and redirect after successful authentication."""
+    session['user_id'] = user.id
     budgets = database.get_budgets_for_user(user.id)
     if budgets:
         session['active_budget_id'] = budgets[0].id
@@ -79,17 +151,60 @@ def callback():
         return redirect(url_for('main.onboarding'))
 
 
+@bp.route('/auth/login')
+def auth_login():
+    if not is_auth0_enabled():
+        flash('OAuth is not configured.', 'error')
+        return redirect(url_for('main.login'))
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for('main.callback', _external=True)
+    )
+
+
+@bp.route('/auth/signup')
+def signup():
+    if not is_auth0_enabled():
+        return redirect(url_for('main.register'))
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for('main.callback', _external=True),
+        screen_hint="signup"
+    )
+
+
+@bp.route('/auth/callback')
+def callback():
+    if not is_auth0_enabled():
+        return redirect(url_for('main.login'))
+    token = oauth.auth0.authorize_access_token()
+    userinfo = token.get("userinfo", {})
+
+    user = database.upsert_user_from_auth0(
+        auth0_id=userinfo["sub"],
+        email=userinfo.get("email", ""),
+        username=userinfo.get("nickname", userinfo.get("name", "User"))
+    )
+
+    if not user.is_active:
+        session.clear()
+        flash('Your account has been deactivated. Contact an administrator.', 'error')
+        return redirect(url_for('main.login'))
+
+    return _complete_login(user)
+
+
 @bp.route('/auth/logout')
 def logout():
     session.clear()
-    return redirect(
-        f'https://{current_app.config["AUTH0_DOMAIN"]}/v2/logout?'
-        + urlencode(
-            {"returnTo": url_for("main.login", _external=True),
-             "client_id": current_app.config["AUTH0_CLIENT_ID"]},
-            quote_via=quote_plus
+    if is_auth0_enabled() and current_app.config.get("AUTH0_DOMAIN"):
+        return redirect(
+            f'https://{current_app.config["AUTH0_DOMAIN"]}/v2/logout?'
+            + urlencode(
+                {"returnTo": url_for("main.login", _external=True),
+                 "client_id": current_app.config["AUTH0_CLIENT_ID"]},
+                quote_via=quote_plus
+            )
         )
-    )
+    return redirect(url_for('main.login'))
 
 
 # --- Onboarding (first-time user) ---
@@ -1105,7 +1220,9 @@ def profile():
     for b in budgets:
         role = database.get_user_role_in_budget(g.user_id, b.id)
         budget_roles.append({"budget": b, "role": role})
-    return render_template('profile.html', user=user, budget_roles=budget_roles)
+    is_local_user = bool(user.password_hash) if user else False
+    return render_template('profile.html', user=user, budget_roles=budget_roles,
+                           auth0_enabled=is_auth0_enabled(), is_local_user=is_local_user)
 
 
 @bp.route('/profile/update-name', methods=['POST'])
@@ -1136,19 +1253,102 @@ def reset_password():
     return redirect(url_for('main.profile'))
 
 
-@bp.route('/profile/enroll-mfa')
+@bp.route('/profile/change-password', methods=['POST'])
 @login_required
-def enroll_mfa():
-    """Redirect to Auth0 with MFA enrollment prompt."""
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for('main.mfa_callback', _external=True),
-        acr_values='http://schemas.openid.net/psp/mfa'
-    )
+def change_password():
+    from werkzeug.security import generate_password_hash, check_password_hash
+    user = database.get_user_by_id(g.user_id)
+    if not user or not user.password_hash:
+        flash('Password change not available for OAuth accounts.', 'error')
+        return redirect(url_for('main.profile'))
+
+    current_pw = request.form.get('current_password', '')
+    new_pw = request.form.get('new_password', '')
+    confirm_pw = request.form.get('confirm_password', '')
+
+    if not check_password_hash(user.password_hash, current_pw):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('main.profile'))
+
+    if new_pw != confirm_pw:
+        flash('New passwords do not match.', 'error')
+        return redirect(url_for('main.profile'))
+
+    if len(new_pw) < 8:
+        flash('New password must be at least 8 characters.', 'error')
+        return redirect(url_for('main.profile'))
+
+    database.update_password_hash(user.id, generate_password_hash(new_pw))
+    flash('Password updated successfully!', 'success')
+    return redirect(url_for('main.profile'))
+
+
+@bp.route('/profile/setup-mfa')
+@login_required
+def setup_mfa():
+    """Show TOTP setup page for local users, or redirect to Auth0 for OAuth users."""
+    user = database.get_user_by_id(g.user_id)
+    if not user:
+        return redirect(url_for('main.login'))
+
+    # Auth0 users use Auth0's MFA enrollment
+    if user.auth0_id and is_auth0_enabled():
+        return oauth.auth0.authorize_redirect(
+            redirect_uri=url_for('main.mfa_auth0_callback', _external=True),
+            acr_values='http://schemas.openid.net/psp/mfa'
+        )
+
+    # Local users get TOTP setup
+    import pyotp
+    secret = pyotp.random_base32()
+    session['totp_setup_secret'] = secret
+    totp = pyotp.TOTP(secret)
+    provisioning_uri = totp.provisioning_uri(name=user.username, issuer_name="Budgetry")
+    return render_template('setup_mfa.html', secret=secret, provisioning_uri=provisioning_uri)
+
+
+@bp.route('/profile/verify-mfa', methods=['POST'])
+@login_required
+def verify_mfa():
+    """Verify TOTP code during MFA setup and enable it."""
+    import pyotp
+    secret = session.get('totp_setup_secret')
+    code = request.form.get('code', '').strip()
+
+    if not secret:
+        flash('MFA setup expired. Please try again.', 'error')
+        return redirect(url_for('main.profile'))
+
+    totp = pyotp.TOTP(secret)
+    if totp.verify(code):
+        database.update_totp_secret(g.user_id, secret)
+        database.update_user_mfa_status(g.user_id, 1)
+        session.pop('totp_setup_secret', None)
+        flash('MFA has been enabled on your account!', 'success')
+    else:
+        flash('Invalid verification code. Please try again.', 'error')
+        return redirect(url_for('main.setup_mfa'))
+
+    return redirect(url_for('main.profile'))
+
+
+@bp.route('/profile/disable-mfa', methods=['POST'])
+@login_required
+def disable_mfa():
+    """Disable TOTP MFA for local users."""
+    user = database.get_user_by_id(g.user_id)
+    if user and user.totp_secret:
+        database.update_totp_secret(g.user_id, "")
+        database.update_user_mfa_status(g.user_id, 0)
+        flash('MFA has been disabled.', 'success')
+    return redirect(url_for('main.profile'))
 
 
 @bp.route('/auth/mfa-callback')
-def mfa_callback():
+def mfa_auth0_callback():
     """Handle return from Auth0 MFA enrollment."""
+    if not is_auth0_enabled():
+        return redirect(url_for('main.profile'))
     token = oauth.auth0.authorize_access_token()
     user_id = session.get('user_id')
     if user_id:
@@ -1193,4 +1393,44 @@ def refresh_user_mfa(user_id):
         mfa = get_mfa_status(user.auth0_id)
         database.update_user_mfa_status(user_id, 1 if mfa else 0)
         flash(f'MFA status refreshed for {user.username}.', 'success')
+    return redirect(url_for('main.admin_users'))
+
+
+@bp.route('/admin/users/<user_id>/toggle-admin', methods=['POST'])
+@admin_required
+def toggle_user_admin(user_id):
+    """Promote or demote a user's admin status."""
+    user = database.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('main.admin_users'))
+    if user.id == g.user_id:
+        flash('You cannot change your own admin status.', 'error')
+        return redirect(url_for('main.admin_users'))
+    new_status = 0 if user.is_admin else 1
+    connection = database.get_connection()
+    cursor = connection.cursor()
+    cursor.execute("UPDATE users SET is_admin = ? WHERE id = ?", (new_status, user_id))
+    connection.commit()
+    connection.close()
+    label = "promoted to admin" if new_status else "demoted from admin"
+    flash(f'User {user.username} has been {label}.', 'success')
+    return redirect(url_for('main.admin_users'))
+
+
+@bp.route('/admin/users/<user_id>/reset-password', methods=['POST'])
+@admin_required
+def admin_reset_password(user_id):
+    """Admin force-resets a local user's password to a temporary one."""
+    from werkzeug.security import generate_password_hash
+    user = database.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('main.admin_users'))
+    if not user.password_hash:
+        flash('Cannot reset password for OAuth-only users.', 'error')
+        return redirect(url_for('main.admin_users'))
+    temp_password = str(uuid.uuid4())[:12]
+    database.update_password_hash(user_id, generate_password_hash(temp_password))
+    flash(f'Password reset for {user.username}. Temporary password: {temp_password}', 'success')
     return redirect(url_for('main.admin_users'))

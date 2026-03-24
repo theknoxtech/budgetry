@@ -6,6 +6,10 @@ from flask import current_app
 _token_cache = {"token": None, "expires_at": 0}
 
 
+def _is_auth0_configured():
+    return bool(current_app.config.get("AUTH0_DOMAIN"))
+
+
 def _get_mgmt_token():
     """Get a Management API token using client credentials, cached."""
     if _token_cache["token"] and time.time() < _token_cache["expires_at"] - 60:
@@ -26,7 +30,9 @@ def _get_mgmt_token():
 
 
 def request_password_reset(email):
-    """Trigger Auth0 password reset email. Public endpoint, no token needed."""
+    """Trigger Auth0 password reset email. Returns False if Auth0 not configured."""
+    if not _is_auth0_configured():
+        return False
     domain = current_app.config["AUTH0_DOMAIN"]
     resp = requests.post(f"https://{domain}/dbconnections/change_password", json={
         "client_id": current_app.config["AUTH0_CLIENT_ID"],
@@ -37,7 +43,9 @@ def request_password_reset(email):
 
 
 def get_mfa_status(auth0_id):
-    """Check if user has MFA enrolled via Management API."""
+    """Check if user has MFA enrolled via Management API. Returns False if Auth0 not configured."""
+    if not _is_auth0_configured():
+        return False
     domain = current_app.config["AUTH0_DOMAIN"]
     try:
         token = _get_mgmt_token()

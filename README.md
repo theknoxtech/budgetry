@@ -1,75 +1,176 @@
-# Budgetry: Personal Finance CLI
+# Budgetry
 
-![Budgetry Main Menu](https://raw.githubusercontent.com/theknoxtech/budgetry/main/assets/main_menu.png)
-
-A simple yet powerful command-line application for managing your personal finances. Track your spending, categorize expenses, and stay on top of your budget with an intuitive, terminal-based interface.
-
-## About The Project
-
-Budgetry was built to provide a straightforward, keyboard-driven way to manage your finances without the clutter of web interfaces or subscription fees. It's designed for those who are comfortable working in a terminal and prefer a local-first approach to their data.
-
-The application stores all financial data locally in a `budget.db` SQLite database file, ensuring you always have full ownership and control of your information.
+A self-hosted personal budgeting app. Track spending, manage categories, sync bank accounts, and install as a PWA on any device.
 
 ## Features
 
--   **Transaction Management**: Add, edit, or delete transactions with details like date, payee, amount, and a descriptive memo.
--   **Custom Categories**: Create personalized spending categories to organize your transactions effectively.
--   **Payee Management**: Maintain a list of common payees for quick and consistent data entry.
--   **Local First**: All your data is stored locally. No cloud, no subscriptions, no privacy concerns.
--   **(In Progress)**: Detailed financial reports to visualize your spending habits.
+- **Budget tracking** — Categories, category groups, monthly targets, and spending goals
+- **Transactions** — Manual entry or automatic sync via Plaid
+- **Recurring transactions** — Automate regular income and expenses
+- **Automation rules** — Auto-categorize transactions by payee or amount
+- **Reports** — Spending breakdowns and trends
+- **PWA** — Install on iOS, Android, macOS, or Windows from the browser
+- **Authentication** — Local accounts with TOTP MFA, optional Auth0 OAuth
+- **Admin panel** — Manage users, promote/demote admins, reset passwords
+- **Dark/light theme** — Toggle between themes
 
-## Getting Started
+## Quick Start (Local Development)
 
-Follow these steps to get a local copy up and running.
-
-### Prerequisites
-
--   Python 3.7+
-
-### Installation
-
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/theknoxtech/budgetry.git
-    ```
-2.  **Navigate to the project directory:**
-    ```sh
-    cd budgetry
-    ```
-3.  **Create and activate a virtual environment:**
-    - On macOS and Linux:
-      ```sh
-      python3 -m venv .venv
-      source .venv/bin/activate
-      ```
-    - On Windows:
-      ```sh
-      python -m venv .venv
-      .venv\Scripts\activate
-      ```
-4.  **Install the required packages:**
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-## Usage
-
-To start the application, run `main.py` from the `app` directory:
+**Prerequisites:** Python 3.10+
 
 ```sh
-python app/main.py
+git clone https://github.com/theknoxtech/budgetry.git
+cd budgetry
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env        # Edit .env and set SECRET_KEY
+python run.py
 ```
 
-You will be greeted with the main menu. From there, you can navigate to different sections of the application by entering the corresponding number.
+Open `http://localhost:5001`. Register your first account — it will automatically be promoted to admin.
 
--   **Manage Transactions**: View, add, edit, or delete your income and expense records.
--   **Manage Categories**: Define the categories you want to sort your transactions into.
--   **Manage Payees**: Keep a clean list of people and businesses you transact with.
+## Self-Hosting with Docker
 
-## Future Development
+**Prerequisites:** Docker and Docker Compose
 
-The vision for Budgetry extends beyond the command line. The next major milestone is to transform it into a full-featured, cross-platform desktop application.
+```sh
+git clone https://github.com/theknoxtech/budgetry.git
+cd budgetry
+cp .env.example .env
+```
 
--   **GUI Application**: The project will be evolving into a graphical user interface using the **CustomTkinter** library, providing a more visual and user-friendly experience.
--   **Reporting**: The "Reports" section is under active development and will soon provide insights into your financial habits.
+Edit `.env` and set a strong `SECRET_KEY`:
 
+```
+SECRET_KEY=your-random-secret-string-here
+```
+
+Start the app:
+
+```sh
+docker compose up -d
+```
+
+Access at `http://localhost:5000`. Your database is persisted in the `./data/` directory.
+
+**Updating:**
+
+```sh
+git pull
+docker compose up -d --build
+```
+
+## Configuration
+
+All configuration is done through environment variables in `.env`. See `.env.example` for the full template.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SECRET_KEY` | Yes | Random string for session signing. Change from default for production. |
+| `AUTH0_DOMAIN` | No | Auth0 domain for OAuth login. Leave blank for local-only auth. |
+| `AUTH0_CLIENT_ID` | No | Auth0 application client ID. |
+| `AUTH0_CLIENT_SECRET` | No | Auth0 application client secret. |
+| `PLAID_CLIENT_ID` | No | Plaid client ID for bank account sync. |
+| `PLAID_SECRET` | No | Plaid secret key. |
+| `PLAID_ENV` | No | Plaid environment: `sandbox`, `development`, or `production`. Defaults to `sandbox`. |
+
+Auth0 and Plaid are entirely optional. The app works fully with local accounts and manual transaction entry.
+
+## Deploy to Cloud Platforms
+
+Budgetry uses SQLite, which stores data in a file. Cloud deployments need **persistent storage** — without it, your data will be lost on each redeploy.
+
+### Railway
+
+1. Connect your GitHub repo on [Railway](https://railway.app)
+2. Railway auto-detects the `Dockerfile`
+3. Add environment variables in the dashboard (`SECRET_KEY` at minimum)
+4. Attach a **volume** and mount it at `/app/instance` to persist the database
+5. Deploy
+
+### Fly.io
+
+```sh
+fly launch                          # Creates app from Dockerfile
+fly volumes create budgetry_data --size 1   # 1 GB persistent volume
+fly secrets set SECRET_KEY=your-random-secret-string-here
+```
+
+Add to your `fly.toml`:
+
+```toml
+[mounts]
+  source = "budgetry_data"
+  destination = "/app/instance"
+```
+
+Then deploy:
+
+```sh
+fly deploy
+```
+
+### Render
+
+1. Create a **Web Service** on [Render](https://render.com) from your GitHub repo
+2. Set runtime to **Docker**
+3. Add a **persistent disk** mounted at `/app/instance`
+4. Set environment variables (`SECRET_KEY` at minimum)
+5. Deploy
+
+### Coolify
+
+[Coolify](https://coolify.io) is a self-hosted PaaS alternative.
+
+1. Add the repo as a **Docker Compose** project
+2. Configure environment variables
+3. Map a persistent volume for `/app/instance`
+4. Deploy
+
+### Cloudflare
+
+Cloudflare Pages and Workers don't support Python/Flask natively. Instead, use **Cloudflare Tunnel** to expose a self-hosted instance:
+
+1. Run Budgetry with Docker on your server or local machine
+2. Install `cloudflared`: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+3. Create a tunnel:
+   ```sh
+   cloudflared tunnel create budgetry
+   cloudflared tunnel route dns budgetry your-subdomain.yourdomain.com
+   ```
+4. Configure `~/.cloudflared/config.yml`:
+   ```yaml
+   tunnel: budgetry
+   ingress:
+     - hostname: your-subdomain.yourdomain.com
+       service: http://localhost:5000
+     - service: http_status:404
+   ```
+5. Run the tunnel:
+   ```sh
+   cloudflared tunnel run budgetry
+   ```
+
+Your app is now accessible at `https://your-subdomain.yourdomain.com` with Cloudflare's SSL and DDoS protection.
+
+## PWA Installation
+
+Budgetry is a Progressive Web App. Once deployed, you can install it from the browser:
+
+| Platform | How to install |
+|----------|---------------|
+| **iOS / iPadOS** | Safari → Share button → "Add to Home Screen" |
+| **Android** | Chrome → Menu (three dots) → "Add to Home Screen" or "Install app" |
+| **macOS** | Chrome → Address bar install icon, or Safari (Sonoma+) → File → "Add to Dock" |
+| **Windows** | Chrome/Edge → Address bar install icon → "Install" |
+
+The installed app opens in standalone mode without browser chrome.
+
+## Tech Stack
+
+- **Backend:** Flask, SQLite, Gunicorn
+- **Frontend:** Jinja2 templates, Pico CSS
+- **Auth:** Werkzeug (local), Authlib (Auth0 OAuth), pyotp (TOTP MFA)
+- **Bank sync:** Plaid
+- **Deployment:** Docker, Docker Compose

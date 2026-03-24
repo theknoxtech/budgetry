@@ -19,7 +19,7 @@ def create_app():
     database.init_db()
 
     from app.auth import init_auth
-    init_auth(app)
+    init_auth(app)  # Will skip Auth0 registration if env vars not set
 
     from app.routes import bp
     app.register_blueprint(bp)

@@ -1,5 +1,10 @@
 /* Budgetry — Client-side interactivity */
 
+// ========== Service Worker (PWA) ==========
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js');
+}
+
 // ========== Theme Toggle ==========
 function initTheme() {
     const saved = localStorage.getItem('budgetry-theme');
