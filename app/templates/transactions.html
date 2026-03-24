@@ -89,10 +89,15 @@
             <td class="{{ 'amount-positive' if txn.amount >= 0 else 'amount-negative' }}">${{ "%.2f"|format(txn.amount) }}</td>
             <td>{{ txn.memo }}</td>
             <td class="actions-cell">
-                <a href="{{ url_for('main.edit_transaction', transaction_id=txn.id) }}" class="btn-edit">Edit</a>
-                <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=txn.id) }}">
-                    <button type="submit" class="btn-delete">Delete</button>
-                </form>
+                <div class="actions-menu">
+                    <button class="actions-trigger" onclick="this.parentElement.classList.toggle('open')" aria-label="Actions">&#8943;</button>
+                    <div class="actions-dropdown">
+                        <a href="{{ url_for('main.edit_transaction', transaction_id=txn.id) }}">Edit</a>
+                        <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=txn.id) }}">
+                            <button type="submit" class="actions-delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
             </td>
         </tr>
         {% endfor %}
@@ -104,4 +109,12 @@
     <p>No transactions found. {% if search or filter_category or filter_account %}<a href="{{ url_for('main.transactions') }}">Clear filters</a> or {% endif %}<a href="{{ url_for('main.add_transaction') }}">Add your first transaction</a>.</p>
 </div>
 {% endif %}
+
+<script>
+document.addEventListener('click', function(e) {
+    document.querySelectorAll('.actions-menu.open').forEach(function(m) {
+        if (!m.contains(e.target)) m.classList.remove('open');
+    });
+});
+</script>
 {% endblock %}

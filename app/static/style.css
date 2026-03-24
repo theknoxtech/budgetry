@@ -453,7 +453,7 @@ nav.nav-bar a:hover {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    overflow: hidden;
+    overflow-x: auto;
     margin-bottom: 0.75rem;
 }
 
@@ -474,6 +474,7 @@ nav.nav-bar a:hover {
     letter-spacing: 0.02em;
     padding: 0.5rem 0.75rem;
     border: none;
+    white-space: nowrap;
 }
 
 .table-container td {
@@ -481,6 +482,7 @@ nav.nav-bar a:hover {
     border-bottom: 1px solid var(--border-light);
     vertical-align: middle;
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .table-container tbody tr {
@@ -562,12 +564,83 @@ a.btn-small {
 
 /* ========== Action Cells ========== */
 .actions-cell {
-    display: flex;
-    gap: 0.25rem;
-    align-items: center;
+    text-align: center;
 }
 
-.actions-cell form {
+.actions-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.actions-trigger {
+    background: none !important;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-md);
+    line-height: 1;
+    width: auto;
+    transition: all 0.15s ease;
+}
+
+.actions-trigger:hover {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+
+.actions-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.2rem);
+    min-width: 120px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    padding: 0.3rem 0;
+}
+
+.actions-menu.open .actions-dropdown {
+    display: block;
+}
+
+.actions-dropdown a,
+.actions-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
+    text-align: left;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: none !important;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.actions-dropdown a:hover,
+.actions-dropdown button:hover {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+
+.actions-dropdown .actions-delete {
+    color: var(--negative);
+}
+
+.actions-dropdown .actions-delete:hover {
+    background-color: var(--negative-bg) !important;
+    color: var(--negative);
+}
+
+.actions-dropdown form {
     margin: 0;
 }
 
