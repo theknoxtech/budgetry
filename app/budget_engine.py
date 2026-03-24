@@ -245,6 +245,119 @@ def build_cashflow_calendar(accounts, transactions, recurring, year, month):
     return calendar_days
 
 
+def analyze_budget_patterns(all_transactions, categories, months_back=3):
+    """Analyze spending patterns and suggest budget reallocations.
+
+    Looks at the last N months of transactions to identify:
+    - Categories consistently underspent (wasted budget)
+    - Categories consistently overspent (needs more budget)
+    - Suggested reallocations to balance things out
+
+    Returns a dict with:
+      - underspent: [{category_name, avg_unused, budgeted, avg_spent}]
+      - overspent: [{category_name, avg_overage, budgeted, avg_spent}]
+      - suggestions: [{from_category, to_category, amount, reason}]
+      - total_recoverable: sum of avg_unused from underspent
+    """
+    today = date.today()
+    cat_map = {c.id: c for c in categories}
+
+    # Build monthly spending per category for the last N months
+    monthly_spending = defaultdict(lambda: defaultdict(float))
+    for t in all_transactions:
+        if not t.category_id or t.category_id == "income":
+            continue
+        try:
+            t_date = date.fromisoformat(t.date[:10])
+        except ValueError:
+            continue
+        months_ago = (today.year - t_date.year) * 12 + (today.month - t_date.month)
+        if 1 <= months_ago <= months_back:  # exclude current month
+            month_key = f"{t_date.year:04d}-{t_date.month:02d}"
+            monthly_spending[t.category_id][month_key] += abs(t.amount)
+
+    underspent = []
+    overspent = []
+
+    for cat in categories:
+        if cat.budgeted <= 0:
+            continue
+
+        spending_by_month = monthly_spending.get(cat.id, {})
+        if not spending_by_month:
+            # No spending in past months but has budget — fully underspent
+            underspent.append({
+                'category_id': cat.id,
+                'category_name': cat.name,
+                'budgeted': cat.budgeted,
+                'avg_spent': 0.0,
+                'avg_unused': cat.budgeted,
+                'months_analyzed': months_back,
+            })
+            continue
+
+        months_with_data = len(spending_by_month)
+        avg_spent = sum(spending_by_month.values()) / max(months_with_data, 1)
+        diff = cat.budgeted - avg_spent
+
+        if diff > cat.budgeted * 0.15:  # >15% underspent consistently
+            underspent.append({
+                'category_id': cat.id,
+                'category_name': cat.name,
+                'budgeted': cat.budgeted,
+                'avg_spent': round(avg_spent, 2),
+                'avg_unused': round(diff, 2),
+                'months_analyzed': months_with_data,
+            })
+        elif diff < -(cat.budgeted * 0.1):  # >10% overspent consistently
+            overspent.append({
+                'category_id': cat.id,
+                'category_name': cat.name,
+                'budgeted': cat.budgeted,
+                'avg_spent': round(avg_spent, 2),
+                'avg_overage': round(abs(diff), 2),
+                'months_analyzed': months_with_data,
+            })
+
+    # Sort by magnitude
+    underspent.sort(key=lambda x: x['avg_unused'], reverse=True)
+    overspent.sort(key=lambda x: x['avg_overage'], reverse=True)
+
+    # Generate suggestions — match overspent needs with underspent surplus
+    suggestions = []
+    remaining_surplus = {u['category_id']: u['avg_unused'] for u in underspent}
+
+    for over in overspent:
+        needed = over['avg_overage']
+        for under in underspent:
+            if needed <= 0:
+                break
+            available = remaining_surplus.get(under['category_id'], 0)
+            if available <= 0:
+                continue
+            transfer = min(needed, available)
+            suggestions.append({
+                'from_category': under['category_name'],
+                'from_id': under['category_id'],
+                'to_category': over['category_name'],
+                'to_id': over['category_id'],
+                'amount': round(transfer, 2),
+                'reason': f"{over['category_name']} overspends by ${over['avg_overage']:.0f}/mo avg",
+            })
+            remaining_surplus[under['category_id']] -= transfer
+            needed -= transfer
+
+    total_recoverable = sum(u['avg_unused'] for u in underspent)
+
+    return {
+        'underspent': underspent,
+        'overspent': overspent,
+        'suggestions': suggestions,
+        'total_recoverable': round(total_recoverable, 2),
+        'months_analyzed': months_back,
+    }
+
+
 def _advance_date(d, frequency):
     """Advance a date by the given frequency. Returns a new date."""
     if frequency == 'weekly':

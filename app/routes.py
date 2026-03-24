@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -933,6 +933,36 @@ def _process_recurring(budget_id):
             database.add_transaction(txn)
             rt.next_date = _advance_next_date(rt.next_date, rt.frequency)
             database.update_recurring_next_date(rt.id, rt.next_date)
+
+
+@bp.route('/insights')
+@login_required
+def insights():
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    analysis = analyze_budget_patterns(all_transactions, categories)
+    return render_template('insights.html', analysis=analysis)
+
+
+@bp.route('/insights/apply', methods=['POST'])
+@login_required
+def apply_suggestion():
+    from_id = request.form.get('from_id')
+    to_id = request.form.get('to_id')
+    amount = float(request.form.get('amount', 0))
+
+    if from_id and to_id and amount > 0:
+        categories = database.get_categories(g.budget_id)
+        cat_map = {c.id: c for c in categories}
+        from_cat = cat_map.get(from_id)
+        to_cat = cat_map.get(to_id)
+        if from_cat and to_cat:
+            database.update_category_budget(from_id, from_cat.budgeted - amount)
+            database.update_category_budget(to_id, to_cat.budgeted + amount)
+            flash(f'Moved ${amount:.2f} from {from_cat.name} to {to_cat.name}.', 'success')
+        else:
+            flash('Category not found.', 'error')
+    return redirect(url_for('main.insights'))
 
 
 @bp.route('/cashflow')

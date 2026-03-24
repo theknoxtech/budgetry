@@ -1386,6 +1386,139 @@ a.nav-username:hover {
     }
 }
 
+/* ========== Budget Insights ========== */
+.insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.insights-suggestions {
+    margin-bottom: 1rem;
+}
+
+.suggestion-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.35rem;
+}
+
+.suggestion-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.suggestion-from {
+    color: var(--positive);
+}
+
+.suggestion-arrow {
+    color: var(--text-muted);
+}
+
+.suggestion-to {
+    color: var(--negative);
+}
+
+.suggestion-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.15rem 0;
+}
+
+.suggestion-reason {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.suggestion-action {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.insight-row {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.insight-row:last-child {
+    border-bottom: none;
+}
+
+.insight-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.insight-bar-track {
+    height: 6px;
+    background-color: var(--border);
+    border-radius: 3px;
+    position: relative;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+}
+
+.overspent .insight-bar-budget {
+    position: absolute;
+    height: 100%;
+    background-color: var(--accent);
+    border-radius: 3px;
+}
+
+.overspent .insight-bar-spent {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--negative);
+    border-radius: 3px;
+    opacity: 0.3;
+}
+
+.underspent .insight-bar-budget {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--border);
+    border-radius: 3px;
+}
+
+.underspent .insight-bar-spent {
+    position: absolute;
+    height: 100%;
+    background-color: var(--positive);
+    border-radius: 3px;
+}
+
+.insight-numbers {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
 /* ========== Admin User Management ========== */
 .admin-users-list {
     display: flex;
