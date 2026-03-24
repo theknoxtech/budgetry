@@ -52,7 +52,7 @@ Start the app:
 docker compose up -d
 ```
 
-Access at `http://localhost:5000`. Your database is persisted in the `./data/` directory.
+Access at `http://localhost:5050`. Your database is persisted in the `./data/` directory.
 
 **Updating:**
 
@@ -60,6 +60,55 @@ Access at `http://localhost:5000`. Your database is persisted in the `./data/` d
 git pull
 docker compose up -d --build
 ```
+
+## Persistent Storage
+
+Budgetry uses SQLite, which stores everything in a single file (`instance/budgetry.db`). Persistence depends on your deployment method:
+
+| Method | How data persists |
+|--------|------------------|
+| **Docker (self-hosted)** | Volume mount `./data:/app/instance` — already configured |
+| **Cloudflare Tunnel** | DB lives on your machine — inherently persistent |
+| **Fly.io / Railway / Render** | Attach a persistent volume mounted at `/app/instance` |
+| **Any deployment** | **Litestream** replication to S3/R2 for automatic backups |
+
+### Litestream (Recommended for Cloud)
+
+[Litestream](https://litestream.io) continuously replicates your SQLite database to S3-compatible object storage. If your container restarts or redeploys, the database is automatically restored from the replica. This is **built into the Docker image** — just set an environment variable to enable it.
+
+**With Cloudflare R2 (free 10 GB):**
+
+1. Create an R2 bucket in your Cloudflare dashboard
+2. Generate an R2 API token with read/write access
+3. Add to your `.env`:
+
+```
+LITESTREAM_REPLICA_URL=s3://your-bucket-name/budgetry.db
+AWS_ACCESS_KEY_ID=your-r2-access-key
+AWS_SECRET_ACCESS_KEY=your-r2-secret-key
+AWS_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+```
+
+4. Restart: `docker compose up -d`
+
+**With AWS S3:**
+
+```
+LITESTREAM_REPLICA_URL=s3://your-bucket-name/budgetry.db
+AWS_ACCESS_KEY_ID=your-aws-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
+```
+
+**With Backblaze B2:**
+
+```
+LITESTREAM_REPLICA_URL=s3://your-bucket-name/budgetry.db
+AWS_ACCESS_KEY_ID=your-b2-key-id
+AWS_SECRET_ACCESS_KEY=your-b2-app-key
+AWS_ENDPOINT_URL=https://s3.us-west-004.backblazeb2.com
+```
+
+When `LITESTREAM_REPLICA_URL` is not set, the app runs normally without replication.
 
 ## Configuration
 
@@ -74,8 +123,12 @@ All configuration is done through environment variables in `.env`. See `.env.exa
 | `PLAID_CLIENT_ID` | No | Plaid client ID for bank account sync. |
 | `PLAID_SECRET` | No | Plaid secret key. |
 | `PLAID_ENV` | No | Plaid environment: `sandbox`, `development`, or `production`. Defaults to `sandbox`. |
+| `LITESTREAM_REPLICA_URL` | No | S3-compatible URL for SQLite replication. See [Persistent Storage](#persistent-storage). |
+| `AWS_ACCESS_KEY_ID` | No | Access key for S3/R2 replication. |
+| `AWS_SECRET_ACCESS_KEY` | No | Secret key for S3/R2 replication. |
+| `AWS_ENDPOINT_URL` | No | Custom S3 endpoint (required for Cloudflare R2 and Backblaze B2). |
 
-Auth0 and Plaid are entirely optional. The app works fully with local accounts and manual transaction entry.
+Auth0, Plaid, and Litestream are entirely optional. The app works fully with local accounts, manual transaction entry, and local-only storage.
 
 ## Deploy to Cloud Platforms
 
@@ -144,7 +197,7 @@ Cloudflare Pages and Workers don't support Python/Flask natively. Instead, use *
    tunnel: budgetry
    ingress:
      - hostname: your-subdomain.yourdomain.com
-       service: http://localhost:5000
+       service: http://localhost:5050
      - service: http_status:404
    ```
 5. Run the tunnel:
