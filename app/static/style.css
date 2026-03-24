@@ -596,6 +596,15 @@ a.btn-small {
     border-radius: var(--radius-md);
 }
 
+.inline-create-row {
+    margin-top: -0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.inline-create-row input {
+    margin-bottom: 0;
+}
+
 /* ========== Flash Messages ========== */
 .flash {
     padding: 0.6rem 1rem;
