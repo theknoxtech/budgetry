@@ -496,6 +496,10 @@ def add_transaction(transaction):
         "INSERT INTO transactions(id, date, payee, amount, memo, category_id, account_id, plaid_transaction_id, budget_id) VALUES(?,?,?,?,?,?,?,?,?)",
         (transaction.id, transaction.date, transaction.payee, transaction.amount, transaction.memo, transaction.category_id, transaction.account_id, transaction.plaid_transaction_id, transaction.budget_id)
     )
+    # Update account balance
+    if transaction.account_id:
+        cursor.execute("UPDATE accounts SET balance = balance + ? WHERE id = ?",
+                        (transaction.amount, transaction.account_id))
     connection.commit()
     connection.close()
 
@@ -547,34 +551,45 @@ def get_transaction_by_plaid_id(plaid_transaction_id):
     connection.close()
     return row is not None
 
-# TODO: Implement delete_transaction(transaction_id)
-def delete_transaction(transaction_id):
+def delete_transaction(transaction_id, budget_id=None):
     connection = get_db()
     cursor = connection.cursor()
-    query = """
-        DELETE FROM transactions WHERE id = ?
-    """
-    cursor.execute(query, (transaction_id,))
+    # Reverse the account balance before deleting
+    cursor.execute("SELECT amount, account_id FROM transactions WHERE id = ?", (transaction_id,))
+    row = cursor.fetchone()
+    if row and row[1]:
+        cursor.execute("UPDATE accounts SET balance = balance - ? WHERE id = ?", (row[0], row[1]))
+    cursor.execute("DELETE FROM transactions WHERE id = ?", (transaction_id,))
     connection.commit()
     connection.close()
 
 def update_transaction(transaction):
     connection = get_db()
     cursor = connection.cursor()
+    # Reverse old balance, apply new balance
+    cursor.execute("SELECT amount, account_id FROM transactions WHERE id = ?", (transaction.id,))
+    old = cursor.fetchone()
+    if old:
+        if old[1]:
+            cursor.execute("UPDATE accounts SET balance = balance - ? WHERE id = ?", (old[0], old[1]))
+        if transaction.account_id:
+            cursor.execute("UPDATE accounts SET balance = balance + ? WHERE id = ?",
+                            (transaction.amount, transaction.account_id))
     query = """
-        UPDATE transactions 
-        SET date = ?, payee = ?, amount = ?, memo = ?, category_id = ? 
+        UPDATE transactions
+        SET date = ?, payee = ?, amount = ?, memo = ?, category_id = ?, account_id = ?
         WHERE id = ?
     """
     values = (
-        transaction.date, 
-        transaction.payee, 
-        transaction.amount, 
-        transaction.memo, 
-        transaction.category_id, 
+        transaction.date,
+        transaction.payee,
+        transaction.amount,
+        transaction.memo,
+        transaction.category_id,
+        transaction.account_id,
         transaction.id
     )
-    
+
     cursor.execute(query, values)
     connection.commit()
     connection.close()
