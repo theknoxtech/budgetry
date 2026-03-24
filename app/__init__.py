@@ -1,4 +1,5 @@
 import os
+import secrets
 from flask import Flask, session
 from dotenv import load_dotenv
 from app import database
@@ -6,9 +7,26 @@ from app import database
 load_dotenv()
 
 
+def _get_secret_key():
+    """Get SECRET_KEY from env, or auto-generate and persist one."""
+    key = os.environ.get('SECRET_KEY', '')
+    if key:
+        return key
+    # Auto-generate and save to instance/.secret_key
+    key_file = os.path.join('instance', '.secret_key')
+    os.makedirs('instance', exist_ok=True)
+    if os.path.exists(key_file):
+        with open(key_file, 'r') as f:
+            return f.read().strip()
+    key = secrets.token_hex(32)
+    with open(key_file, 'w') as f:
+        f.write(key)
+    return key
+
+
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-budgetry-key')
+    app.config['SECRET_KEY'] = _get_secret_key()
     app.config['PLAID_CLIENT_ID'] = os.environ.get('PLAID_CLIENT_ID', '')
     app.config['PLAID_SECRET'] = os.environ.get('PLAID_SECRET', '')
     app.config['PLAID_ENV'] = os.environ.get('PLAID_ENV', 'sandbox')

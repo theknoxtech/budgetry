@@ -24,7 +24,7 @@ cd budgetry
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env        # Edit .env and set SECRET_KEY
+cp .env.example .env        # Optional — SECRET_KEY is auto-generated if not set
 python run.py
 ```
 
@@ -40,11 +40,7 @@ cd budgetry
 cp .env.example .env
 ```
 
-Edit `.env` and set a strong `SECRET_KEY`:
-
-```
-SECRET_KEY=your-random-secret-string-here
-```
+Edit `.env` if you want to configure optional features (Plaid, Auth0, Litestream). A `SECRET_KEY` is auto-generated on first run if not set.
 
 Start the app:
 
@@ -116,7 +112,7 @@ All configuration is done through environment variables in `.env`. See `.env.exa
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SECRET_KEY` | Yes | Random string for session signing. Change from default for production. |
+| `SECRET_KEY` | No | Random string for session signing. Auto-generated and persisted on first run if not set. |
 | `AUTH0_DOMAIN` | No | Auth0 domain for OAuth login. Leave blank for local-only auth. |
 | `AUTH0_CLIENT_ID` | No | Auth0 application client ID. |
 | `AUTH0_CLIENT_SECRET` | No | Auth0 application client secret. |
