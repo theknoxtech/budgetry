@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %} - Budget Insights{% endblock %}
+
+{% block content %}
+<h2>Budget Insights</h2>
+
+{% if not analysis.underspent and not analysis.overspent %}
+<div class="empty-state">
+    <p>Not enough data yet. Budget insights need at least 1 month of transaction history to analyze patterns.</p>
+</div>
+{% else %}
+
+{% if analysis.suggestions %}
+<div class="card insights-suggestions">
+    <h3>Suggested Reallocations</h3>
+    <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.75rem;">
+        Based on {{ analysis.months_analyzed }} months of spending patterns. Total recoverable:
+        <strong class="amount-positive">${{ "%.2f"|format(analysis.total_recoverable) }}</strong>/mo
+    </p>
+    {% for s in analysis.suggestions %}
+    <div class="suggestion-card">
+        <div class="suggestion-info">
+            <div class="suggestion-flow">
+                <span class="suggestion-from">{{ s.from_category }}</span>
+                <span class="suggestion-arrow">&rarr;</span>
+                <span class="suggestion-to">{{ s.to_category }}</span>
+            </div>
+            <div class="suggestion-amount">${{ "%.2f"|format(s.amount) }}/mo</div>
+            <div class="suggestion-reason">{{ s.reason }}</div>
+        </div>
+        <form method="POST" action="{{ url_for('main.apply_suggestion') }}" class="suggestion-action">
+            <input type="hidden" name="from_id" value="{{ s.from_id }}">
+            <input type="hidden" name="to_id" value="{{ s.to_id }}">
+            <input type="hidden" name="amount" value="{{ s.amount }}">
+            <button type="submit" class="btn-small">Apply</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="insights-grid">
+    {% if analysis.overspent %}
+    <div class="card">
+        <h3>Consistently Overspent</h3>
+        <div class="insights-list">
+            {% for cat in analysis.overspent %}
+            <div class="insight-row overspent">
+                <div class="insight-name">{{ cat.category_name }}</div>
+                <div class="insight-detail">
+                    <div class="insight-bar-track">
+                        <div class="insight-bar-budget" style="width: {{ (cat.budgeted / cat.avg_spent * 100) if cat.avg_spent > 0 else 100 }}%"></div>
+                        <div class="insight-bar-spent"></div>
+                    </div>
+                    <div class="insight-numbers">
+                        <span>Budget: ${{ "%.0f"|format(cat.budgeted) }}</span>
+                        <span class="amount-negative">Avg: ${{ "%.0f"|format(cat.avg_spent) }}</span>
+                        <span class="amount-negative">+${{ "%.0f"|format(cat.avg_overage) }}/mo over</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if analysis.underspent %}
+    <div class="card">
+        <h3>Consistently Underspent</h3>
+        <div class="insights-list">
+            {% for cat in analysis.underspent %}
+            <div class="insight-row underspent">
+                <div class="insight-name">{{ cat.category_name }}</div>
+                <div class="insight-detail">
+                    <div class="insight-bar-track">
+                        <div class="insight-bar-budget"></div>
+                        <div class="insight-bar-spent" style="width: {{ (cat.avg_spent / cat.budgeted * 100) if cat.budgeted > 0 else 0 }}%"></div>
+                    </div>
+                    <div class="insight-numbers">
+                        <span>Budget: ${{ "%.0f"|format(cat.budgeted) }}</span>
+                        <span>Avg: ${{ "%.0f"|format(cat.avg_spent) }}</span>
+                        <span class="amount-positive">${{ "%.0f"|format(cat.avg_unused) }}/mo unused</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}

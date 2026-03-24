@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %} - Forecast{% endblock %}
+
+{% block content %}
+<h2>Forecast</h2>
+<p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">
+    Project your finances forward based on current spending patterns and recurring transactions.
+</p>
+
+<div class="forecast-summary">
+    <div class="report-stat">
+        <small>Current Balance</small>
+        <div class="{{ 'amount-positive' if forecast.starting_balance >= 0 else 'amount-negative' }}">
+            ${{ "%.2f"|format(forecast.starting_balance) }}
+        </div>
+    </div>
+    <div class="report-stat">
+        <small>Avg Monthly Income</small>
+        <div class="amount-positive">${{ "%.2f"|format(forecast.avg_income) }}</div>
+    </div>
+    <div class="report-stat">
+        <small>Avg Monthly Expenses</small>
+        <div class="amount-negative">${{ "%.2f"|format(forecast.avg_expenses) }}</div>
+    </div>
+    {% set monthly_net = forecast.avg_income - forecast.avg_expenses %}
+    <div class="report-stat">
+        <small>Monthly Net</small>
+        <div class="{{ 'amount-positive' if monthly_net >= 0 else 'amount-negative' }}">
+            ${{ "%.2f"|format(monthly_net) }}
+        </div>
+    </div>
+</div>
+
+<!-- What-If Adjustments -->
+<details class="card forecast-adjustments">
+    <summary><strong>What-If Scenario</strong> <span class="text-muted" style="font-size:0.8rem">— adjust category budgets to see the impact</span></summary>
+    <form method="GET" action="{{ url_for('main.forecast') }}" class="forecast-form">
+        <input type="hidden" name="months" value="{{ months }}">
+        <div class="forecast-sliders">
+            {% for cat in categories %}
+            {% if cat.budgeted > 0 %}
+            <div class="forecast-slider-row">
+                <label>{{ cat.name }}</label>
+                <input type="number" name="adj_{{ cat.id }}"
+                       value="{{ adjustments.get(cat.id, cat.budgeted) }}"
+                       step="10" min="0"
+                       class="forecast-input">
+                <span class="text-muted" style="font-size:0.75rem">was ${{ "%.0f"|format(cat.budgeted) }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <div class="forecast-actions">
+            <button type="submit" class="btn-small">Update Forecast</button>
+            <a href="{{ url_for('main.forecast', months=months) }}" class="btn-small btn-edit">Reset</a>
+        </div>
+    </form>
+</details>
+
+<!-- Timeline selector -->
+<div class="forecast-timeline-selector">
+    {% for m in [3, 6, 12, 24] %}
+    <a href="{{ url_for('main.forecast', months=m) }}"
+       class="btn-small {{ '' if months != m else 'active-timeline' }}">{{ m }}mo</a>
+    {% endfor %}
+</div>
+
+<!-- Projection Chart (ASCII bar chart) -->
+<div class="card">
+    <h3>Projected Balance</h3>
+    <div class="forecast-chart">
+        {% set max_balance = forecast.projections | map(attribute='balance') | max %}
+        {% set min_balance = forecast.projections | map(attribute='balance') | min %}
+        {% set range_val = max_balance - min_balance if max_balance != min_balance else 1 %}
+        {% for p in forecast.projections %}
+        <div class="forecast-bar-row">
+            <div class="forecast-bar-label">{{ p.month_label[:3] }} {{ p.year }}</div>
+            <div class="forecast-bar-track">
+                {% if p.balance >= 0 %}
+                <div class="forecast-bar-fill positive" style="width: {{ (p.balance / max_balance * 100) if max_balance > 0 else 0 }}%"></div>
+                {% else %}
+                <div class="forecast-bar-fill negative" style="width: {{ (p.balance|abs / (min_balance|abs) * 30) if min_balance < 0 else 0 }}%"></div>
+                {% endif %}
+            </div>
+            <div class="forecast-bar-value {{ 'amount-positive' if p.balance >= 0 else 'amount-negative' }}">
+                ${{ "%.0f"|format(p.balance) }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Monthly Breakdown Table -->
+<div class="table-container">
+<table>
+    <thead>
+        <tr>
+            <th>Month</th>
+            <th>Income</th>
+            <th>Expenses</th>
+            <th>Net</th>
+            <th>Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in forecast.projections %}
+        <tr>
+            <td><strong>{{ p.month_label }}</strong></td>
+            <td class="amount-positive">${{ "%.2f"|format(p.income) }}</td>
+            <td class="amount-negative">${{ "%.2f"|format(p.expenses) }}</td>
+            <td class="{{ 'amount-positive' if p.net >= 0 else 'amount-negative' }}">
+                ${{ "%.2f"|format(p.net) }}
+            </td>
+            <td class="{{ 'amount-positive' if p.balance >= 0 else 'amount-negative' }}">
+                ${{ "%.2f"|format(p.balance) }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

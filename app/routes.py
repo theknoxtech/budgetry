@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns, run_forecast, calculate_streaks
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -382,11 +382,15 @@ def budget():
             'categories': cats_by_group.get(gr.id, [])
         })
 
+    # Spending velocity
+    velocity = calculate_spending_velocity(transactions, budgeted, year, month)
+
     return render_template('budget.html',
                            categories=categories,
                            accounts=accounts,
                            result=result,
                            target_info=target_info,
+                           velocity=velocity,
                            month_label=month_label,
                            prev_month=prev_month,
                            next_month=next_month,
@@ -929,6 +933,110 @@ def _process_recurring(budget_id):
             database.add_transaction(txn)
             rt.next_date = _advance_next_date(rt.next_date, rt.frequency)
             database.update_recurring_next_date(rt.id, rt.next_date)
+
+
+@bp.route('/streaks')
+@login_required
+def streaks():
+    accounts = database.get_accounts(g.budget_id)
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    streak_data = calculate_streaks(all_transactions, categories, accounts)
+    return render_template('streaks.html', streaks=streak_data)
+
+
+@bp.route('/insights')
+@login_required
+def insights():
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    analysis = analyze_budget_patterns(all_transactions, categories)
+    return render_template('insights.html', analysis=analysis)
+
+
+@bp.route('/insights/apply', methods=['POST'])
+@login_required
+def apply_suggestion():
+    from_id = request.form.get('from_id')
+    to_id = request.form.get('to_id')
+    amount = float(request.form.get('amount', 0))
+
+    if from_id and to_id and amount > 0:
+        categories = database.get_categories(g.budget_id)
+        cat_map = {c.id: c for c in categories}
+        from_cat = cat_map.get(from_id)
+        to_cat = cat_map.get(to_id)
+        if from_cat and to_cat:
+            database.update_category_budget(from_id, from_cat.budgeted - amount)
+            database.update_category_budget(to_id, to_cat.budgeted + amount)
+            flash(f'Moved ${amount:.2f} from {from_cat.name} to {to_cat.name}.', 'success')
+        else:
+            flash('Category not found.', 'error')
+    return redirect(url_for('main.insights'))
+
+
+@bp.route('/forecast')
+@login_required
+def forecast():
+    accounts = database.get_accounts(g.budget_id)
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    recurring = database.get_recurring_transactions(g.budget_id)
+
+    months = int(request.args.get('months', 6))
+    months = max(1, min(months, 24))
+
+    # Parse adjustments from query params (category_id=amount)
+    adjustments = {}
+    for key, val in request.args.items():
+        if key.startswith('adj_'):
+            cat_id = key[4:]
+            try:
+                adjustments[cat_id] = float(val)
+            except ValueError:
+                pass
+
+    result = run_forecast(accounts, categories, all_transactions, recurring, months, adjustments or None)
+
+    return render_template('forecast.html',
+                           forecast=result,
+                           categories=categories,
+                           adjustments=adjustments,
+                           months=months)
+
+
+@bp.route('/cashflow')
+@login_required
+def cashflow():
+    month_str = request.args.get('month', '')
+    today = date.today()
+    try:
+        year, month = int(month_str[:4]), int(month_str[5:7])
+    except (ValueError, IndexError):
+        year, month = today.year, today.month
+
+    month_label = f"{month_name[month]} {year}"
+    if month == 1:
+        prev_month = f"{year - 1:04d}-12"
+    else:
+        prev_month = f"{year:04d}-{month - 1:02d}"
+    if month == 12:
+        next_month = f"{year + 1:04d}-01"
+    else:
+        next_month = f"{year:04d}-{month + 1:02d}"
+
+    accounts = database.get_accounts(g.budget_id)
+    transactions = database.get_transaction(g.budget_id)
+    recurring = database.get_recurring_transactions(g.budget_id)
+
+    calendar_days = build_cashflow_calendar(accounts, transactions, recurring, year, month)
+
+    return render_template('cashflow.html',
+                           calendar_days=calendar_days,
+                           month_label=month_label,
+                           prev_month=prev_month,
+                           next_month=next_month,
+                           starting_balance=sum(a.balance for a in accounts))
 
 
 @bp.route('/recurring')

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %} - Streaks{% endblock %}
+
+{% block content %}
+<h2>Streaks & Milestones</h2>
+
+{% if not streaks.active_streaks and not streaks.milestones %}
+<div class="empty-state">
+    <p>Start tracking your budget to earn streaks! Spend under budget, save consistently, and hit balance milestones.</p>
+</div>
+{% else %}
+
+<!-- Active Streaks -->
+{% if streaks.active_streaks %}
+<div class="streaks-active">
+    {% for s in streaks.active_streaks %}
+    <div class="streak-card streak-{{ s.color }}">
+        <div class="streak-value">{{ s.value }}<span class="streak-unit">{{ s.unit }}</span></div>
+        <div class="streak-name">{{ s.name }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Milestones -->
+{% if streaks.milestones %}
+<div class="card">
+    <h3>Achievements</h3>
+    <div class="milestones-grid">
+        {% for m in streaks.milestones %}
+        <div class="milestone milestone-{{ m.type }}">
+            <div class="milestone-icon">
+                {% if m.icon == 'shield' %}&#128737;
+                {% elif m.icon == 'fire' %}&#128293;
+                {% elif m.icon == 'trophy' %}&#127942;
+                {% elif m.icon == 'target' %}&#127919;
+                {% elif m.icon == 'piggy' %}&#128176;
+                {% elif m.icon == 'star' %}&#11088;
+                {% elif m.icon == 'bank' %}&#127974;
+                {% else %}&#127881;
+                {% endif %}
+            </div>
+            <div class="milestone-title">{{ m.title }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Under Budget Details -->
+{% if streaks.under_budget_streaks %}
+<div class="card">
+    <h3>Category Streaks</h3>
+    <div class="table-container" style="border: none; margin: 0;">
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Months Under Budget</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat_id, info in streaks.under_budget_streaks.items() %}
+            <tr>
+                <td>{{ info.category_name }}</td>
+                <td>
+                    <div class="streak-dots">
+                        {% for i in range(info.months) %}
+                        <span class="streak-dot active"></span>
+                        {% endfor %}
+                        {% for i in range(12 - info.months) %}
+                        <span class="streak-dot"></span>
+                        {% endfor %}
+                    </div>
+                    <span class="text-muted" style="font-size: 0.75rem">{{ info.months }} month{{ 's' if info.months != 1 else '' }}</span>
+                </td>
+                <td>
+                    {% if info.months >= 6 %}
+                    <span class="streak-badge gold">Excellent</span>
+                    {% elif info.months >= 3 %}
+                    <span class="streak-badge silver">Great</span>
+                    {% else %}
+                    <span class="streak-badge bronze">Building</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

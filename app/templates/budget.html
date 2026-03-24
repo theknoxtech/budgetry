@@ -33,6 +33,7 @@
 {% macro category_row(cat) %}
 {% set available = result.get('available', {}) %}
 {% set activity = result.get('activity', {}) %}
+{% set vel = velocity.get(cat.id) %}
 <tr>
     <td>{{ cat.name }}</td>
     <td>
@@ -45,6 +46,28 @@
     {% set avail = available.get(cat.id, 0) %}
     <td class="{{ 'amount-positive' if avail > 0 else 'amount-negative' if avail < 0 else 'amount-zero' }}">
         ${{ "%.2f"|format(avail) }}
+    </td>
+    <td>
+        {% if vel and vel.budget > 0 %}
+        <div class="velocity-indicator">
+            <div class="velocity-bar-track">
+                <div class="velocity-bar-fill velocity-{{ vel.pace }}" style="width: {{ [vel.pace_pct, 100] | min }}%"></div>
+                <div class="velocity-day-marker" style="left: {{ (vel.days_elapsed / vel.days_total * 100) }}%"></div>
+            </div>
+            <div class="velocity-label">
+                {% if vel.pace == 'over' %}
+                <span class="velocity-text-over">${{ "%.0f"|format(vel.projected) }} proj</span>
+                {% elif vel.pace == 'on_track' %}
+                <span class="velocity-text-ok">On pace</span>
+                {% else %}
+                <span class="velocity-text-under">${{ "%.0f"|format(vel.projected) }} proj</span>
+                {% endif %}
+                <span class="velocity-rate">${{ "%.0f"|format(vel.daily_rate) }}/day</span>
+            </div>
+        </div>
+        {% elif vel and vel.daily_rate > 0 %}
+        <span class="velocity-rate">${{ "%.0f"|format(vel.daily_rate) }}/day</span>
+        {% endif %}
     </td>
     <td>
         {% if cat.id in target_info %}
@@ -82,6 +105,7 @@
                 <th>Budgeted</th>
                 <th>Activity</th>
                 <th>Available</th>
+                <th>Pace</th>
                 <th>Target</th>
             </tr>
         </thead>
