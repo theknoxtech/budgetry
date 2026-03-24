@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns, run_forecast
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns, run_forecast, calculate_streaks
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -933,6 +933,16 @@ def _process_recurring(budget_id):
             database.add_transaction(txn)
             rt.next_date = _advance_next_date(rt.next_date, rt.frequency)
             database.update_recurring_next_date(rt.id, rt.next_date)
+
+
+@bp.route('/streaks')
+@login_required
+def streaks():
+    accounts = database.get_accounts(g.budget_id)
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    streak_data = calculate_streaks(all_transactions, categories, accounts)
+    return render_template('streaks.html', streaks=streak_data)
 
 
 @bp.route('/insights')

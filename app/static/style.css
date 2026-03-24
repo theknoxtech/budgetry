@@ -1649,6 +1649,143 @@ a.nav-username:hover {
     min-width: 70px;
 }
 
+/* ========== Streaks & Milestones ========== */
+.streaks-active {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.streak-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+    transition: border-color 0.15s ease;
+}
+
+.streak-card:hover {
+    border-color: var(--text-muted);
+}
+
+.streak-positive {
+    border-left: 3px solid var(--positive);
+}
+
+.streak-accent {
+    border-left: 3px solid var(--accent);
+}
+
+.streak-warning {
+    border-left: 3px solid var(--warning);
+}
+
+.streak-negative {
+    border-left: 3px solid var(--negative);
+}
+
+.streak-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.streak-unit {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 0.15rem;
+}
+
+.streak-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.milestones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.5rem;
+}
+
+.milestone {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+}
+
+.milestone-achievement {
+    background-color: var(--warning-bg);
+}
+
+.milestone-milestone {
+    background-color: var(--positive-bg);
+}
+
+.milestone-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.milestone-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.streak-dots {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 0.15rem;
+}
+
+.streak-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--border);
+}
+
+.streak-dot.active {
+    background-color: var(--accent);
+}
+
+.streak-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-pill);
+}
+
+.streak-badge.gold {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+[data-theme="dark"] .streak-badge.gold {
+    background-color: #451a03;
+    color: #fbbf24;
+}
+
+.streak-badge.silver {
+    background-color: var(--positive-bg);
+    color: var(--positive);
+}
+
+.streak-badge.bronze {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
 /* ========== Admin User Management ========== */
 .admin-users-list {
     display: flex;

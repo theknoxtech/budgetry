@@ -464,6 +464,161 @@ def run_forecast(accounts, categories, all_transactions, recurring, months_ahead
     }
 
 
+def calculate_streaks(all_transactions, categories, accounts):
+    """Calculate financial streaks and milestones.
+
+    Returns:
+      - no_spend_streak: consecutive days with no spending (ending today)
+      - under_budget_streaks: {category_id: consecutive months under budget}
+      - savings_rate: percentage of income saved this month
+      - milestones: list of achieved milestones
+      - active_streaks: list of current active streaks for display
+    """
+    today = date.today()
+
+    # --- No-spend streak ---
+    # Find consecutive days ending at yesterday with zero spending
+    spending_dates = set()
+    for t in all_transactions:
+        if t.category_id != "income" and t.amount < 0:
+            try:
+                spending_dates.add(date.fromisoformat(t.date[:10]))
+            except ValueError:
+                pass
+
+    no_spend_streak = 0
+    check_date = today - timedelta(days=1)
+    while check_date not in spending_dates and check_date >= today - timedelta(days=365):
+        no_spend_streak += 1
+        check_date -= timedelta(days=1)
+
+    # --- Under budget streaks per category ---
+    # Count consecutive past months each category was under budget
+    cat_map = {c.id: c for c in categories}
+    monthly_spending_by_cat = defaultdict(lambda: defaultdict(float))
+    for t in all_transactions:
+        if not t.category_id or t.category_id == "income":
+            continue
+        try:
+            t_date = date.fromisoformat(t.date[:10])
+        except ValueError:
+            continue
+        month_key = (t_date.year, t_date.month)
+        monthly_spending_by_cat[t.category_id][month_key] += abs(t.amount)
+
+    under_budget_streaks = {}
+    for cat in categories:
+        if cat.budgeted <= 0:
+            continue
+        streak = 0
+        for months_back in range(1, 13):  # check up to 12 months
+            check_month = today.month - months_back
+            check_year = today.year
+            while check_month <= 0:
+                check_month += 12
+                check_year -= 1
+            spent = monthly_spending_by_cat[cat.id].get((check_year, check_month), 0)
+            if spent <= cat.budgeted:
+                streak += 1
+            else:
+                break
+        if streak > 0:
+            under_budget_streaks[cat.id] = {
+                'category_name': cat.name,
+                'months': streak,
+            }
+
+    # --- Savings rate (current month) ---
+    month_prefix = f"{today.year:04d}-{today.month:02d}"
+    month_income = 0.0
+    month_spending = 0.0
+    for t in all_transactions:
+        if not t.date.startswith(month_prefix):
+            continue
+        if t.category_id == "income" or t.amount > 0:
+            month_income += abs(t.amount)
+        else:
+            month_spending += abs(t.amount)
+
+    savings_rate = ((month_income - month_spending) / month_income * 100) if month_income > 0 else 0
+
+    # --- Total balance milestone ---
+    total_balance = sum(a.balance for a in accounts)
+
+    # --- Build milestones ---
+    milestones = []
+
+    # No-spend milestones
+    if no_spend_streak >= 1:
+        milestones.append({'icon': 'shield', 'title': f'{no_spend_streak}-day no-spend streak', 'type': 'streak'})
+    if no_spend_streak >= 7:
+        milestones.append({'icon': 'fire', 'title': 'Week without spending!', 'type': 'achievement'})
+    if no_spend_streak >= 30:
+        milestones.append({'icon': 'trophy', 'title': 'Month without spending!', 'type': 'achievement'})
+
+    # Under budget milestones
+    for cat_id, info in under_budget_streaks.items():
+        if info['months'] >= 3:
+            milestones.append({
+                'icon': 'target',
+                'title': f"{info['category_name']}: {info['months']}mo under budget",
+                'type': 'streak',
+            })
+
+    # Savings milestones
+    if savings_rate >= 20:
+        milestones.append({'icon': 'piggy', 'title': f'Saving {savings_rate:.0f}% of income this month', 'type': 'achievement'})
+    if savings_rate >= 50:
+        milestones.append({'icon': 'star', 'title': 'Super saver! 50%+ savings rate', 'type': 'achievement'})
+
+    # Balance milestones
+    balance_thresholds = [1000, 5000, 10000, 25000, 50000, 100000]
+    for threshold in balance_thresholds:
+        if total_balance >= threshold:
+            milestones.append({
+                'icon': 'bank',
+                'title': f'Balance over ${threshold:,}',
+                'type': 'milestone',
+            })
+
+    # Build active streaks for display
+    active_streaks = []
+    if no_spend_streak > 0:
+        active_streaks.append({
+            'name': 'No-Spend Days',
+            'value': no_spend_streak,
+            'unit': 'days',
+            'color': 'positive',
+        })
+
+    # Top 3 under-budget streaks
+    sorted_streaks = sorted(under_budget_streaks.values(), key=lambda x: x['months'], reverse=True)[:3]
+    for s in sorted_streaks:
+        active_streaks.append({
+            'name': f"{s['category_name']} Under Budget",
+            'value': s['months'],
+            'unit': 'months',
+            'color': 'accent',
+        })
+
+    if savings_rate > 0:
+        active_streaks.append({
+            'name': 'Savings Rate',
+            'value': round(savings_rate, 1),
+            'unit': '%',
+            'color': 'positive' if savings_rate >= 20 else 'warning' if savings_rate >= 10 else 'negative',
+        })
+
+    return {
+        'no_spend_streak': no_spend_streak,
+        'under_budget_streaks': under_budget_streaks,
+        'savings_rate': round(savings_rate, 1),
+        'total_balance': round(total_balance, 2),
+        'milestones': milestones,
+        'active_streaks': active_streaks,
+    }
+
+
 def _advance_date(d, frequency):
     """Advance a date by the given frequency. Returns a new date."""
     if frequency == 'weekly':
