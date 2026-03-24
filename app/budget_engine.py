@@ -487,10 +487,11 @@ def calculate_streaks(all_transactions, categories, accounts):
                 pass
 
     no_spend_streak = 0
-    check_date = today - timedelta(days=1)
-    while check_date not in spending_dates and check_date >= today - timedelta(days=365):
-        no_spend_streak += 1
-        check_date -= timedelta(days=1)
+    if spending_dates:
+        check_date = today - timedelta(days=1)
+        while check_date not in spending_dates and check_date >= today - timedelta(days=365):
+            no_spend_streak += 1
+            check_date -= timedelta(days=1)
 
     # --- Under budget streaks per category ---
     # Count consecutive past months each category was under budget
