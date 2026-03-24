@@ -118,6 +118,10 @@
         {% endif %}
 
         <main class="{{ 'content' if current_user else 'container' }}">
+            <div id="update-banner" class="update-banner" style="display:none;">
+                A new version of Budgetry is available! <a id="update-link" href="https://github.com/theknoxtech/budgetry/releases/latest">Update now</a>
+            </div>
+
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -131,5 +135,19 @@
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
+    {% if current_user and current_user.is_admin %}
+    <script>
+    (function() {
+        var last = localStorage.getItem('budgetry-update-check');
+        if (last && Date.now() - parseInt(last) < 3600000) return;
+        fetch('/api/version').then(function(r) { return r.json(); }).then(function(d) {
+            localStorage.setItem('budgetry-update-check', Date.now());
+            if (d.latest && d.version !== d.latest) {
+                document.getElementById('update-banner').style.display = '';
+            }
+        }).catch(function() {});
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>

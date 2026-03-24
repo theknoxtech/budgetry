@@ -32,30 +32,43 @@ Open `http://localhost:5001`. Register your first account — it will automatica
 
 ## Self-Hosting with Docker
 
-**Prerequisites:** Docker and Docker Compose
+### Option A: Build Locally
 
 ```sh
 git clone https://github.com/theknoxtech/budgetry.git
 cd budgetry
-cp .env.example .env
-```
-
-Edit `.env` if you want to configure optional features (Plaid, Auth0, Litestream). A `SECRET_KEY` is auto-generated on first run if not set.
-
-Start the app:
-
-```sh
+cp .env.example .env   # Optional — SECRET_KEY is auto-generated if not set
 docker compose up -d
 ```
 
+### Option B: Pre-built Image (Recommended)
+
+Use the pre-built image from GitHub Container Registry — no need to clone the repo:
+
+```sh
+mkdir budgetry && cd budgetry
+curl -O https://raw.githubusercontent.com/theknoxtech/budgetry/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/theknoxtech/budgetry/main/.env.example
+cp .env.example .env
+docker compose -f docker-compose.prod.yml up -d
+```
+
+This includes **Watchtower**, which automatically pulls new versions every hour. Your app stays up to date with zero maintenance.
+
 Access at `http://localhost:5050`. Your database is persisted in the `./data/` directory.
 
-**Updating:**
+### Automatic Updates
+
+**Docker users (pre-built image):** Watchtower is included in `docker-compose.prod.yml` and checks for new images hourly. Updates are pulled and applied automatically with zero downtime.
+
+**Docker users (build locally):** Pull and rebuild manually:
 
 ```sh
 git pull
 docker compose up -d --build
 ```
+
+**Admin notification:** Admins see an "Update available" banner in the app when a new version is released on GitHub.
 
 ## Persistent Storage
 

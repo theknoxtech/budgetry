@@ -678,6 +678,23 @@ a.btn-small {
     margin-bottom: 0;
 }
 
+/* ========== Update Banner ========== */
+.update-banner {
+    padding: 0.6rem 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    background-color: var(--warning-bg);
+    border: 1px solid var(--warning);
+    color: var(--text-primary);
+}
+
+.update-banner a {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 /* ========== Flash Messages ========== */
 .flash {
     padding: 0.6rem 1rem;

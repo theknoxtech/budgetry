@@ -1,0 +1,16 @@
+services:
+  budgetry:
+    image: ghcr.io/theknoxtech/budgetry:latest
+    ports:
+      - "5050:5000"
+    volumes:
+      - ./data:/app/instance
+    env_file: .env
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 3600 --cleanup budgetry
+    restart: unless-stopped

@@ -1,13 +1,11 @@
 from collections import defaultdict
 from calendar import monthrange, month_name
 from datetime import date, timedelta
-from app.models import Transaction, Category
 
 # TODO Add feature to get total spending by day, month, year
 
 
-def total_spending():
-    transactions = get_transaction()
+def total_spending(transactions):
     amounts = [transaction.amount for transaction in transactions]
     return sum(amounts)
 
@@ -260,7 +258,6 @@ def analyze_budget_patterns(all_transactions, categories, months_back=3):
       - total_recoverable: sum of avg_unused from underspent
     """
     today = date.today()
-    cat_map = {c.id: c for c in categories}
 
     # Build monthly spending per category for the last N months
     monthly_spending = defaultdict(lambda: defaultdict(float))
@@ -495,7 +492,6 @@ def calculate_streaks(all_transactions, categories, accounts):
 
     # --- Under budget streaks per category ---
     # Count consecutive past months each category was under budget
-    cat_map = {c.id: c for c in categories}
     monthly_spending_by_cat = defaultdict(lambda: defaultdict(float))
     for t in all_transactions:
         if not t.category_id or t.category_id == "income":

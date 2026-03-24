@@ -1,15 +1,21 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
-from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
+from app.models import Transaction, Category, Payee, Account, BudgetRecord, CategoryGroup, RecurringTransaction
 from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns, run_forecast, calculate_streaks
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
 from collections import defaultdict
 from urllib.parse import urlencode, quote_plus
+import os
 import uuid
+import requests as http_requests
 
 bp = Blueprint('main', __name__)
+
+# App version from VERSION file
+_version_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'VERSION')
+APP_VERSION = open(_version_file).read().strip() if os.path.exists(_version_file) else '0.0.0'
 
 
 # --- Before Request: load budget context ---
@@ -1152,7 +1158,6 @@ def toggle_recurring(rt_id):
 def reports():
     categories = database.get_categories(g.budget_id)
     all_transactions = database.get_transaction(g.budget_id)
-    accts = database.get_accounts(g.budget_id)
     category_map = {c.id: c.name for c in categories}
 
     # Spending by category (expenses only, current month by default)
@@ -1501,7 +1506,7 @@ def mfa_auth0_callback():
     """Handle return from Auth0 MFA enrollment."""
     if not is_auth0_enabled():
         return redirect(url_for('main.profile'))
-    token = oauth.auth0.authorize_access_token()
+    oauth.auth0.authorize_access_token()
     user_id = session.get('user_id')
     if user_id:
         database.update_user_mfa_status(user_id, 1)
@@ -1586,3 +1591,20 @@ def admin_reset_password(user_id):
     database.update_password_hash(user_id, generate_password_hash(temp_password))
     flash(f'Password reset for {user.username}. Temporary password: {temp_password}', 'success')
     return redirect(url_for('main.admin_users'))
+
+
+# --- Version Check API ---
+@bp.route('/api/version')
+def api_version():
+    """Return current version and latest available version."""
+    latest = APP_VERSION
+    try:
+        resp = http_requests.get(
+            'https://api.github.com/repos/theknoxtech/budgetry/releases/latest',
+            timeout=3
+        )
+        if resp.status_code == 200:
+            latest = resp.json().get('tag_name', APP_VERSION).lstrip('v')
+    except Exception:
+        pass
+    return jsonify(version=APP_VERSION, latest=latest)

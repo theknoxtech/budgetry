@@ -178,7 +178,7 @@ def init_db():
             cursor.execute("UPDATE transactions SET budget_id = ? WHERE budget_id = '' OR budget_id IS NULL", (default_budget_id,))
             cursor.execute("UPDATE payees SET budget_id = ? WHERE budget_id = '' OR budget_id IS NULL", (default_budget_id,))
 
-            print(f"[Budgetry] Migrated existing data. Log in with Auth0 to claim your account.")
+            print("[Budgetry] Migrated existing data. Log in with Auth0 to claim your account.")
 
     # Seed first user as admin if no admins exist
     cursor.execute("SELECT COUNT(*) FROM users WHERE is_admin = 1")
@@ -524,25 +524,6 @@ def get_transaction_by_id(transaction_id):
     return None
 
 
-def update_transaction(transaction):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        "UPDATE transactions SET date=?, payee=?, amount=?, memo=?, category_id=?, account_id=? WHERE id=? AND budget_id=?",
-        (transaction.date, transaction.payee, transaction.amount, transaction.memo, transaction.category_id, transaction.account_id, transaction.id, transaction.budget_id)
-    )
-    connection.commit()
-    connection.close()
-
-
-def delete_transaction(transaction_id, budget_id):
-    connection = get_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM transactions WHERE id = ? AND budget_id = ?", (transaction_id, budget_id))
-    connection.commit()
-    connection.close()
-
-
 def get_transaction_by_plaid_id(plaid_transaction_id):
     connection = get_connection()
     cursor = connection.cursor()
@@ -552,7 +533,7 @@ def get_transaction_by_plaid_id(plaid_transaction_id):
     return row is not None
 
 def delete_transaction(transaction_id, budget_id=None):
-    connection = get_db()
+    connection = get_connection()
     cursor = connection.cursor()
     # Reverse the account balance before deleting
     cursor.execute("SELECT amount, account_id FROM transactions WHERE id = ?", (transaction_id,))
@@ -564,7 +545,7 @@ def delete_transaction(transaction_id, budget_id=None):
     connection.close()
 
 def update_transaction(transaction):
-    connection = get_db()
+    connection = get_connection()
     cursor = connection.cursor()
     # Reverse old balance, apply new balance
     cursor.execute("SELECT amount, account_id FROM transactions WHERE id = ?", (transaction.id,))
