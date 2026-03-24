@@ -6,3 +6,10 @@ __pycache__/
 .git/
 .claude/
 *.pyc
+.github/
+tests/
+*.md
+.vscode/
+.DS_Store
+.pytest_cache/
+.ruff_cache/
