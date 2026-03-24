@@ -207,6 +207,96 @@ Cloudflare Pages and Workers don't support Python/Flask natively. Instead, use *
 
 Your app is now accessible at `https://your-subdomain.yourdomain.com` with Cloudflare's SSL and DDoS protection.
 
+### Oracle Cloud (Always Free)
+
+Oracle Cloud's [Always Free tier](https://www.oracle.com/cloud/free/) includes ARM VMs with up to 4 OCPUs and 24 GB RAM — more than enough for Budgetry.
+
+**1. Create a free VM:**
+
+- Sign up at [cloud.oracle.com](https://cloud.oracle.com)
+- Go to **Compute → Instances → Create Instance**
+- Choose **Ampere** (ARM) shape: 1 OCPU / 6 GB RAM is plenty
+- Select **Ubuntu 22.04** (or 24.04) as the image
+- Download your SSH key pair during creation
+
+**2. SSH into the instance and install Docker:**
+
+```sh
+ssh -i your-key.pem ubuntu@<your-instance-ip>
+
+# Install Docker
+sudo apt update && sudo apt install -y docker.io docker-compose-v2
+sudo usermod -aG docker $USER
+# Log out and back in for group change to take effect
+exit
+ssh -i your-key.pem ubuntu@<your-instance-ip>
+```
+
+**3. Clone and start Budgetry:**
+
+```sh
+git clone https://github.com/theknoxtech/budgetry.git
+cd budgetry
+cp .env.example .env
+nano .env  # Set SECRET_KEY
+docker compose up -d
+```
+
+**4. Open the firewall:**
+
+Oracle Cloud blocks traffic by default. Open port 5050 in both places:
+
+*VCN Security List (Oracle Console):*
+- Go to **Networking → Virtual Cloud Networks → your VCN → Security Lists → Default**
+- Add an **Ingress Rule**: Source `0.0.0.0/0`, Protocol TCP, Destination Port `5050`
+
+*Instance firewall (iptables):*
+```sh
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5050 -j ACCEPT
+sudo netfilter-persistent save
+```
+
+Access at `http://<your-instance-ip>:5050`.
+
+**5. (Recommended) Add HTTPS with Caddy:**
+
+```sh
+sudo apt install -y caddy
+```
+
+Edit `/etc/caddy/Caddyfile`:
+
+```
+your-domain.com {
+    reverse_proxy localhost:5050
+}
+```
+
+```sh
+sudo systemctl restart caddy
+```
+
+Point your domain's DNS A record to your Oracle instance IP. Caddy handles SSL certificates automatically.
+
+**6. (Optional) Litestream backup to Oracle Object Storage:**
+
+Oracle Object Storage is S3-compatible and included in the free tier (10 GB).
+
+- Create a bucket in **Storage → Buckets**
+- Generate a **Customer Secret Key** in your user settings (acts as S3 credentials)
+- Add to `.env`:
+
+```
+LITESTREAM_REPLICA_URL=s3://your-bucket-name/budgetry.db
+AWS_ACCESS_KEY_ID=your-customer-secret-access-key
+AWS_SECRET_ACCESS_KEY=your-customer-secret-key
+AWS_ENDPOINT_URL=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
+```
+
+- Restart: `docker compose up -d`
+
+Your namespace and region are visible in your Oracle Cloud tenancy details.
+
 ## PWA Installation
 
 Budgetry is a Progressive Web App. Once deployed, you can install it from the browser:
