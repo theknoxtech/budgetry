@@ -1,4 +1,5 @@
 from collections import defaultdict
+from calendar import monthrange
 from datetime import date
 from app.models import Transaction, Category
 
@@ -67,6 +68,69 @@ def calculate_monthly_needed(target_amount, target_type, target_date, current_av
         return target_amount
 
     return remaining
+
+def calculate_spending_velocity(transactions, budgeted, year, month):
+    """Calculate spending velocity per category.
+
+    Returns a dict keyed by category_id with:
+      - daily_rate: average spending per day so far
+      - projected: projected total spending by month end
+      - budget: budgeted amount
+      - pace: 'under', 'on_track', 'over' (within 5% = on_track)
+      - pace_pct: projected as percentage of budget (0 if no budget)
+      - days_elapsed: days into the month
+      - days_total: total days in the month
+    """
+    today = date.today()
+    days_in_month = monthrange(year, month)[1]
+
+    # For past months, use full month; for current month, use days elapsed
+    if year == today.year and month == today.month:
+        days_elapsed = today.day
+    elif date(year, month, 1) < today:
+        days_elapsed = days_in_month  # past month — all days elapsed
+    else:
+        days_elapsed = 0  # future month
+
+    if days_elapsed == 0:
+        return {}
+
+    # Sum spending per category (exclude income)
+    spent_by_cat = defaultdict(float)
+    for t in transactions:
+        if t.category_id and t.category_id != "income":
+            spent_by_cat[t.category_id] += abs(t.amount)
+
+    velocity = {}
+    for cat_id, budget in budgeted.items():
+        spent = spent_by_cat.get(cat_id, 0.0)
+        daily_rate = spent / days_elapsed
+        projected = daily_rate * days_in_month
+
+        if budget > 0:
+            pace_pct = (projected / budget) * 100
+            if pace_pct <= 95:
+                pace = 'under'
+            elif pace_pct <= 105:
+                pace = 'on_track'
+            else:
+                pace = 'over'
+        else:
+            pace_pct = 0
+            pace = 'under' if spent == 0 else 'over'
+
+        velocity[cat_id] = {
+            'daily_rate': round(daily_rate, 2),
+            'projected': round(projected, 2),
+            'budget': budget,
+            'pace': pace,
+            'pace_pct': round(pace_pct, 1),
+            'days_elapsed': days_elapsed,
+            'days_total': days_in_month,
+        }
+
+    return velocity
+
 
 if __name__ == "__main__":
     # Example usage or testing

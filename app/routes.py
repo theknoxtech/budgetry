@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -382,11 +382,15 @@ def budget():
             'categories': cats_by_group.get(gr.id, [])
         })
 
+    # Spending velocity
+    velocity = calculate_spending_velocity(transactions, budgeted, year, month)
+
     return render_template('budget.html',
                            categories=categories,
                            accounts=accounts,
                            result=result,
                            target_info=target_info,
+                           velocity=velocity,
                            month_label=month_label,
                            prev_month=prev_month,
                            next_month=next_month,

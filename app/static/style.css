@@ -1147,6 +1147,76 @@ a.nav-username:hover {
     font-size: 0.85rem;
 }
 
+/* ========== Spending Velocity ========== */
+.velocity-indicator {
+    min-width: 90px;
+}
+
+.velocity-bar-track {
+    position: relative;
+    height: 4px;
+    background-color: var(--border);
+    border-radius: 2px;
+    overflow: visible;
+    margin-bottom: 0.25rem;
+}
+
+.velocity-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.velocity-bar-fill.velocity-under {
+    background-color: var(--positive);
+}
+
+.velocity-bar-fill.velocity-on_track {
+    background-color: var(--accent);
+}
+
+.velocity-bar-fill.velocity-over {
+    background-color: var(--negative);
+}
+
+.velocity-day-marker {
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: 8px;
+    background-color: var(--text-muted);
+    border-radius: 1px;
+    transform: translateX(-1px);
+}
+
+.velocity-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1;
+}
+
+.velocity-text-over {
+    color: var(--negative);
+    font-weight: 600;
+}
+
+.velocity-text-ok {
+    color: var(--positive);
+    font-weight: 600;
+}
+
+.velocity-text-under {
+    color: var(--positive);
+}
+
+.velocity-rate {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+}
+
 /* ========== Admin User Management ========== */
 .admin-users-list {
     display: flex;
