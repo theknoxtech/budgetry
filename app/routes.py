@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, g, current_app
 from app import database
 from app.models import Transaction, Category, Payee, Account, User, BudgetRecord, CategoryGroup, RecurringTransaction
-from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns
+from app.budget_engine import run_budget_engine, calculate_monthly_needed, calculate_spending_velocity, build_cashflow_calendar, analyze_budget_patterns, run_forecast
 from app.auth import login_required, admin_required, oauth, is_auth0_enabled
 from datetime import date, datetime, timedelta
 from calendar import month_name
@@ -963,6 +963,36 @@ def apply_suggestion():
         else:
             flash('Category not found.', 'error')
     return redirect(url_for('main.insights'))
+
+
+@bp.route('/forecast')
+@login_required
+def forecast():
+    accounts = database.get_accounts(g.budget_id)
+    categories = database.get_categories(g.budget_id)
+    all_transactions = database.get_transaction(g.budget_id)
+    recurring = database.get_recurring_transactions(g.budget_id)
+
+    months = int(request.args.get('months', 6))
+    months = max(1, min(months, 24))
+
+    # Parse adjustments from query params (category_id=amount)
+    adjustments = {}
+    for key, val in request.args.items():
+        if key.startswith('adj_'):
+            cat_id = key[4:]
+            try:
+                adjustments[cat_id] = float(val)
+            except ValueError:
+                pass
+
+    result = run_forecast(accounts, categories, all_transactions, recurring, months, adjustments or None)
+
+    return render_template('forecast.html',
+                           forecast=result,
+                           categories=categories,
+                           adjustments=adjustments,
+                           months=months)
 
 
 @bp.route('/cashflow')

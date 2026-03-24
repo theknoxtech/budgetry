@@ -1,5 +1,5 @@
 from collections import defaultdict
-from calendar import monthrange
+from calendar import monthrange, month_name
 from datetime import date, timedelta
 from app.models import Transaction, Category
 
@@ -355,6 +355,112 @@ def analyze_budget_patterns(all_transactions, categories, months_back=3):
         'suggestions': suggestions,
         'total_recoverable': round(total_recoverable, 2),
         'months_analyzed': months_back,
+    }
+
+
+def run_forecast(accounts, categories, all_transactions, recurring, months_ahead=6, adjustments=None):
+    """Project future balances based on current spending patterns and adjustments.
+
+    Args:
+        accounts: list of Account objects
+        categories: list of Category objects
+        all_transactions: all transactions for the budget
+        recurring: list of RecurringTransaction objects
+        months_ahead: number of months to project
+        adjustments: dict of {category_id: new_budget_amount} for what-if scenarios
+
+    Returns:
+        list of monthly projections: [{month_label, income, expenses, net, balance}]
+    """
+    today = date.today()
+    starting_balance = sum(a.balance for a in accounts)
+
+    # Calculate average monthly income from past 3 months
+    monthly_income = defaultdict(float)
+    monthly_expenses = defaultdict(float)
+    for t in all_transactions:
+        try:
+            t_date = date.fromisoformat(t.date[:10])
+        except ValueError:
+            continue
+        months_ago = (today.year - t_date.year) * 12 + (today.month - t_date.month)
+        if 1 <= months_ago <= 3:
+            month_key = f"{t_date.year:04d}-{t_date.month:02d}"
+            if t.category_id == "income" or t.amount > 0:
+                monthly_income[month_key] += t.amount
+            else:
+                monthly_expenses[month_key] += abs(t.amount)
+
+    avg_income = sum(monthly_income.values()) / max(len(monthly_income), 1)
+    avg_expenses = sum(monthly_expenses.values()) / max(len(monthly_expenses), 1)
+
+    # If adjustments are provided, recalculate expected expenses
+    if adjustments:
+        total_budgeted = sum(c.budgeted for c in categories)
+        adjusted_total = 0
+        for c in categories:
+            if c.id in adjustments:
+                adjusted_total += adjustments[c.id]
+            else:
+                adjusted_total += c.budgeted
+        # Scale expenses proportionally to budget change
+        if total_budgeted > 0:
+            expense_ratio = adjusted_total / total_budgeted
+            avg_expenses = avg_expenses * expense_ratio
+
+    # Calculate recurring monthly totals for more accurate projections
+    recurring_monthly_in = 0.0
+    recurring_monthly_out = 0.0
+    for rt in recurring:
+        if not rt.is_active:
+            continue
+        monthly_equiv = rt.amount
+        if rt.frequency == 'weekly':
+            monthly_equiv = rt.amount * 4.33
+        elif rt.frequency == 'biweekly':
+            monthly_equiv = rt.amount * 2.17
+        elif rt.frequency == 'yearly':
+            monthly_equiv = rt.amount / 12
+
+        if monthly_equiv >= 0:
+            recurring_monthly_in += monthly_equiv
+        else:
+            recurring_monthly_out += abs(monthly_equiv)
+
+    # Use the higher of avg or recurring as the baseline
+    projected_income = max(avg_income, recurring_monthly_in)
+    projected_expenses = max(avg_expenses, recurring_monthly_out)
+
+    # Build monthly projections
+    projections = []
+    balance = starting_balance
+
+    for i in range(months_ahead):
+        future_month = today.month + i + 1
+        future_year = today.year
+        while future_month > 12:
+            future_month -= 12
+            future_year += 1
+
+        net = projected_income - projected_expenses
+        balance += net
+
+        projections.append({
+            'month_label': f"{month_name[future_month]} {future_year}",
+            'month_num': future_month,
+            'year': future_year,
+            'income': round(projected_income, 2),
+            'expenses': round(projected_expenses, 2),
+            'net': round(net, 2),
+            'balance': round(balance, 2),
+        })
+
+    return {
+        'projections': projections,
+        'avg_income': round(projected_income, 2),
+        'avg_expenses': round(projected_expenses, 2),
+        'starting_balance': round(starting_balance, 2),
+        'months_ahead': months_ahead,
     }
 
 

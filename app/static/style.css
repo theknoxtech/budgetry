@@ -1519,6 +1519,136 @@ a.nav-username:hover {
     color: var(--text-secondary);
 }
 
+/* ========== Forecast ========== */
+.forecast-summary {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.forecast-adjustments {
+    margin-bottom: 1rem;
+}
+
+.forecast-adjustments summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.forecast-adjustments summary::marker,
+.forecast-adjustments summary::-webkit-details-marker {
+    display: none;
+}
+
+.forecast-adjustments[open] summary {
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.5rem;
+}
+
+.forecast-sliders {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.forecast-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.forecast-slider-row label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    min-width: 80px;
+    color: var(--text-primary);
+}
+
+.forecast-input {
+    width: 80px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+    margin: 0;
+    border-radius: var(--radius-sm);
+}
+
+.forecast-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.forecast-form {
+    margin: 0;
+}
+
+.forecast-timeline-selector {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+}
+
+.forecast-timeline-selector .active-timeline {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+[data-theme="dark"] .forecast-timeline-selector .active-timeline {
+    color: #111827;
+}
+
+.forecast-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.forecast-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.forecast-bar-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 65px;
+    text-align: right;
+}
+
+.forecast-bar-track {
+    flex: 1;
+    height: 20px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.forecast-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-sm);
+    transition: width 0.3s ease;
+}
+
+.forecast-bar-fill.positive {
+    background-color: var(--positive);
+}
+
+.forecast-bar-fill.negative {
+    background-color: var(--negative);
+}
+
+.forecast-bar-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 70px;
+}
+
 /* ========== Admin User Management ========== */
 .admin-users-list {
     display: flex;

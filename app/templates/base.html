@@ -32,6 +32,7 @@
             <li><a href="{{ url_for('main.recurring_transactions') }}" {% if request.endpoint == 'main.recurring_transactions' %}class="active"{% endif %}>Recurring</a></li>
             <li><a href="{{ url_for('main.cashflow') }}" {% if request.endpoint == 'main.cashflow' %}class="active"{% endif %}>Cash Flow</a></li>
             <li><a href="{{ url_for('main.insights') }}" {% if request.endpoint == 'main.insights' %}class="active"{% endif %}>Insights</a></li>
+            <li><a href="{{ url_for('main.forecast') }}" {% if request.endpoint == 'main.forecast' %}class="active"{% endif %}>Forecast</a></li>
             <li><a href="{{ url_for('main.reports') }}" {% if request.endpoint == 'main.reports' %}class="active"{% endif %}>Reports</a></li>
             <li><a href="{{ url_for('main.settings') }}" {% if request.endpoint == 'main.settings' %}class="active"{% endif %}>Settings</a></li>
             <li><button id="theme-toggle" class="nav-toggle" title="Toggle theme"></button></li>
