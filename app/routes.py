@@ -748,9 +748,29 @@ def add_transaction():
             flash('Please enter a valid amount.', 'error')
             return redirect(url_for('main.add_transaction'))
 
-        payee = request.form.get('payee', '').strip()
-        memo = request.form.get('memo', '').strip()
+        # Handle payee: existing select or new inline creation
+        payee_select = request.form.get('payee_select', '')
+        if payee_select == '__new__':
+            payee = request.form.get('new_payee_name', '').strip()
+            if payee:
+                new_payee = Payee(id=str(uuid.uuid4()), name=payee, budget_id=g.budget_id)
+                database.add_payee(new_payee)
+        else:
+            payee = payee_select
+
+        # Handle category: existing select or new inline creation
         category_id = request.form.get('category_id', '')
+        if category_id == '__new__':
+            new_cat_name = request.form.get('new_category_name', '').strip()
+            if new_cat_name:
+                category_id = str(uuid.uuid4())
+                new_cat = Category(id=category_id, name=new_cat_name, budgeted=0.0,
+                                   activity=0.0, available=0.0, budget_id=g.budget_id, group_id='')
+                database.add_category(new_cat)
+            else:
+                category_id = ''
+
+        memo = request.form.get('memo', '').strip()
         account_id = request.form.get('account_id', '')
         txn_date = request.form.get('date', str(date.today()))
 
@@ -783,10 +803,12 @@ def add_transaction():
 
     categories = database.get_categories(g.budget_id)
     accts = database.get_accounts(g.budget_id)
+    payee_list = database.get_payees(g.budget_id)
     defaults = database.get_all_budget_defaults(g.budget_id)
     return render_template('add_transaction.html',
                            categories=categories,
                            accounts=accts,
+                           payees=payee_list,
                            today=str(date.today()),
                            default_account_id=defaults.get('default_account_id', ''),
                            default_category_id=defaults.get('default_category_id', ''))
@@ -807,13 +829,33 @@ def edit_transaction(transaction_id):
             flash('Please enter a valid amount.', 'error')
             return redirect(url_for('main.edit_transaction', transaction_id=transaction_id))
 
-        payee = request.form.get('payee', '').strip()
+        # Handle payee: existing select or new inline creation
+        payee_select = request.form.get('payee_select', '')
+        if payee_select == '__new__':
+            payee = request.form.get('new_payee_name', '').strip()
+            if payee:
+                new_payee = Payee(id=str(uuid.uuid4()), name=payee, budget_id=g.budget_id)
+                database.add_payee(new_payee)
+        else:
+            payee = payee_select
+
         if not payee:
             flash('Payee is required.', 'error')
             return redirect(url_for('main.edit_transaction', transaction_id=transaction_id))
 
-        memo = request.form.get('memo', '').strip()
+        # Handle category: existing select or new inline creation
         category_id = request.form.get('category_id', '')
+        if category_id == '__new__':
+            new_cat_name = request.form.get('new_category_name', '').strip()
+            if new_cat_name:
+                category_id = str(uuid.uuid4())
+                new_cat = Category(id=category_id, name=new_cat_name, budgeted=0.0,
+                                   activity=0.0, available=0.0, budget_id=g.budget_id, group_id='')
+                database.add_category(new_cat)
+            else:
+                category_id = ''
+
+        memo = request.form.get('memo', '').strip()
         account_id = request.form.get('account_id', '')
 
         # Apply automation rules for empty fields
@@ -838,7 +880,9 @@ def edit_transaction(transaction_id):
 
     categories = database.get_categories(g.budget_id)
     accts = database.get_accounts(g.budget_id)
-    return render_template('edit_transaction.html', transaction=txn, categories=categories, accounts=accts)
+    payee_list = database.get_payees(g.budget_id)
+    return render_template('edit_transaction.html', transaction=txn, categories=categories,
+                           accounts=accts, payees=payee_list)
 
 
 @bp.route('/transactions/<transaction_id>/delete', methods=['POST'])
