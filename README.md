@@ -151,79 +151,74 @@ Budgetry uses SQLite, which stores data in a file. Cloud deployments need **pers
 4. Attach a **volume** and mount it at `/app/instance` to persist the database
 5. Deploy
 
-### Fly.io (Recommended)
+### DigitalOcean (Recommended)
 
-Fly.io's free tier includes 3 shared VMs and 1 GB persistent volumes — enough for Budgetry.
+DigitalOcean's $4/month Droplet is the simplest way to host Budgetry. New accounts get **$200 in free credits for 60 days**.
 
-**1. Install the Fly CLI:**
+**1. Create a Droplet:**
 
-```sh
-# macOS
-brew install flyctl
+- Sign up at [digitalocean.com](https://www.digitalocean.com)
+- Click **Create → Droplets**
+- Choose **Ubuntu 24.04**
+- Select the **$4/month** plan (512 MB RAM, 1 vCPU, 10 GB SSD)
+- Choose a datacenter region close to you
+- Add your SSH key (or use a password)
+- Click **Create Droplet**
 
-# Linux
-curl -L https://fly.io/install.sh | sh
-
-# Windows
-powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
-```
-
-**2. Sign up and authenticate:**
+**2. SSH in and install Docker:**
 
 ```sh
-fly auth signup    # Or: fly auth login
+ssh root@<your-droplet-ip>
+
+# Install Docker
+curl -fsSL https://get.docker.com | sh
 ```
 
-**3. Launch from the repo (uses the included `fly.toml` and `Dockerfile`):**
+**3. Deploy Budgetry:**
 
 ```sh
-git clone https://github.com/theknoxtech/budgetry.git
-cd budgetry
-fly launch         # Say yes to copy the existing config
+mkdir /opt/budgetry && cd /opt/budgetry
+curl -O https://raw.githubusercontent.com/theknoxtech/budgetry/main/docker-compose.prod.yml
+curl -O https://raw.githubusercontent.com/theknoxtech/budgetry/main/.env.example
+cp .env.example .env
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-**4. Create a persistent volume for your database:**
+Access at `http://<your-droplet-ip>:5050`. Register your first account — it will automatically be promoted to admin.
+
+**4. (Recommended) Add HTTPS with Caddy:**
 
 ```sh
-fly volumes create budgetry_data --region atl --size 1
+apt install -y caddy
 ```
 
-> Change `atl` to your preferred [Fly region](https://fly.io/docs/reference/regions/). The volume must be in the same region as your app.
+Edit `/etc/caddy/Caddyfile`:
 
-**5. Deploy:**
+```
+your-domain.com {
+    reverse_proxy localhost:5050
+}
+```
 
 ```sh
-fly deploy
+systemctl restart caddy
 ```
 
-Your app is live at `https://budgetry.fly.dev`. Register your first account — it will automatically be promoted to admin.
+Point your domain's DNS A record to your Droplet IP. Caddy handles SSL certificates automatically. Open ports 80 and 443 in your DigitalOcean firewall if you have one enabled.
 
-**6. (Optional) Custom domain:**
+**5. (Optional) Auto-deploy from GitHub:**
 
-```sh
-fly certs add your-domain.com
-```
+Add these secrets in your repo's **Settings → Secrets → Actions**:
 
-Point your domain's DNS to the IP shown by `fly ips list`. Fly handles SSL automatically.
+| Secret | Value |
+|--------|-------|
+| `DO_HOST` | Your Droplet's IP address |
+| `DO_USER` | `root` (or your SSH user) |
+| `DO_SSH_KEY` | Your private SSH key |
 
-**7. (Optional) Set up auto-deploy from GitHub:**
+The included GitHub Actions deploy workflow will SSH in and pull the latest image on every push to `main`.
 
-Generate a Fly API token and add it as a GitHub secret:
-
-```sh
-fly tokens create deploy -x 999999h
-```
-
-Add the token as `FLY_API_TOKEN` in your repo's **Settings → Secrets → Actions**. The included GitHub Actions workflow will auto-deploy on every push to `main`.
-
-**Useful commands:**
-
-```sh
-fly status          # Check app status
-fly logs            # Stream live logs
-fly ssh console     # SSH into the running container
-fly open            # Open your app in the browser
-```
+**Automatic updates:** The `docker-compose.prod.yml` includes Watchtower, which checks for new Docker images hourly and updates automatically.
 
 ### Render
 
