@@ -151,26 +151,78 @@ Budgetry uses SQLite, which stores data in a file. Cloud deployments need **pers
 4. Attach a **volume** and mount it at `/app/instance` to persist the database
 5. Deploy
 
-### Fly.io
+### Fly.io (Recommended)
+
+Fly.io's free tier includes 3 shared VMs and 1 GB persistent volumes — enough for Budgetry.
+
+**1. Install the Fly CLI:**
 
 ```sh
-fly launch                          # Creates app from Dockerfile
-fly volumes create budgetry_data --size 1   # 1 GB persistent volume
-fly secrets set SECRET_KEY=your-random-secret-string-here
+# macOS
+brew install flyctl
+
+# Linux
+curl -L https://fly.io/install.sh | sh
+
+# Windows
+powershell -Command "iwr https://fly.io/install.ps1 -useb | iex"
 ```
 
-Add to your `fly.toml`:
+**2. Sign up and authenticate:**
 
-```toml
-[mounts]
-  source = "budgetry_data"
-  destination = "/app/instance"
+```sh
+fly auth signup    # Or: fly auth login
 ```
 
-Then deploy:
+**3. Launch from the repo (uses the included `fly.toml` and `Dockerfile`):**
+
+```sh
+git clone https://github.com/theknoxtech/budgetry.git
+cd budgetry
+fly launch         # Say yes to copy the existing config
+```
+
+**4. Create a persistent volume for your database:**
+
+```sh
+fly volumes create budgetry_data --region atl --size 1
+```
+
+> Change `atl` to your preferred [Fly region](https://fly.io/docs/reference/regions/). The volume must be in the same region as your app.
+
+**5. Deploy:**
 
 ```sh
 fly deploy
+```
+
+Your app is live at `https://budgetry.fly.dev`. Register your first account — it will automatically be promoted to admin.
+
+**6. (Optional) Custom domain:**
+
+```sh
+fly certs add your-domain.com
+```
+
+Point your domain's DNS to the IP shown by `fly ips list`. Fly handles SSL automatically.
+
+**7. (Optional) Set up auto-deploy from GitHub:**
+
+Generate a Fly API token and add it as a GitHub secret:
+
+```sh
+fly tokens create deploy -x 999999h
+```
+
+Add the token as `FLY_API_TOKEN` in your repo's **Settings → Secrets → Actions**. The included GitHub Actions workflow will auto-deploy on every push to `main`.
+
+**Useful commands:**
+
+```sh
+fly status          # Check app status
+fly logs            # Stream live logs
+fly ssh console     # SSH into the running container
+fly open            # Open your app in the browser
 ```
 
 ### Render
@@ -215,96 +267,6 @@ Cloudflare Pages and Workers don't support Python/Flask natively. Instead, use *
    ```
 
 Your app is now accessible at `https://your-subdomain.yourdomain.com` with Cloudflare's SSL and DDoS protection.
-
-### Oracle Cloud (Always Free)
-
-Oracle Cloud's [Always Free tier](https://www.oracle.com/cloud/free/) includes ARM VMs with up to 4 OCPUs and 24 GB RAM — more than enough for Budgetry.
-
-**1. Create a free VM:**
-
-- Sign up at [cloud.oracle.com](https://cloud.oracle.com)
-- Go to **Compute → Instances → Create Instance**
-- Choose **Ampere** (ARM) shape: 1 OCPU / 6 GB RAM is plenty
-- Select **Ubuntu 22.04** (or 24.04) as the image
-- Download your SSH key pair during creation
-
-**2. SSH into the instance and install Docker:**
-
-```sh
-ssh -i your-key.pem ubuntu@<your-instance-ip>
-
-# Install Docker
-sudo apt update && sudo apt install -y docker.io docker-compose-v2
-sudo usermod -aG docker $USER
-# Log out and back in for group change to take effect
-exit
-ssh -i your-key.pem ubuntu@<your-instance-ip>
-```
-
-**3. Clone and start Budgetry:**
-
-```sh
-git clone https://github.com/theknoxtech/budgetry.git
-cd budgetry
-cp .env.example .env
-nano .env  # Set SECRET_KEY
-docker compose up -d
-```
-
-**4. Open the firewall:**
-
-Oracle Cloud blocks traffic by default. Open port 5050 in both places:
-
-*VCN Security List (Oracle Console):*
-- Go to **Networking → Virtual Cloud Networks → your VCN → Security Lists → Default**
-- Add an **Ingress Rule**: Source `0.0.0.0/0`, Protocol TCP, Destination Port `5050`
-
-*Instance firewall (iptables):*
-```sh
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5050 -j ACCEPT
-sudo netfilter-persistent save
-```
-
-Access at `http://<your-instance-ip>:5050`.
-
-**5. (Recommended) Add HTTPS with Caddy:**
-
-```sh
-sudo apt install -y caddy
-```
-
-Edit `/etc/caddy/Caddyfile`:
-
-```
-your-domain.com {
-    reverse_proxy localhost:5050
-}
-```
-
-```sh
-sudo systemctl restart caddy
-```
-
-Point your domain's DNS A record to your Oracle instance IP. Caddy handles SSL certificates automatically.
-
-**6. (Optional) Litestream backup to Oracle Object Storage:**
-
-Oracle Object Storage is S3-compatible and included in the free tier (10 GB).
-
-- Create a bucket in **Storage → Buckets**
-- Generate a **Customer Secret Key** in your user settings (acts as S3 credentials)
-- Add to `.env`:
-
-```
-LITESTREAM_REPLICA_URL=s3://your-bucket-name/budgetry.db
-AWS_ACCESS_KEY_ID=your-customer-secret-access-key
-AWS_SECRET_ACCESS_KEY=your-customer-secret-key
-AWS_ENDPOINT_URL=https://<namespace>.compat.objectstorage.<region>.oraclecloud.com
-```
-
-- Restart: `docker compose up -d`
-
-Your namespace and region are visible in your Oracle Cloud tenancy details.
 
 ## PWA Installation
 
